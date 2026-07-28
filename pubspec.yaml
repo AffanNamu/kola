@@ -63,7 +63,7 @@ dependencies:
   shared_preferences: ^2.2.2
   url_launcher: ^6.2.4
   share_plus: ^7.2.1
-  package_info_plus: ^5.0.1
+  package_info_plus: ^9.0.1
   device_info_plus: ^9.1.2
   permission_handler: ^11.2.0
   local_auth: ^2.1.8
