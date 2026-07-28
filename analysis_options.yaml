@@ -1,0 +1,21 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  plugins:
+    - custom_lint
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+  errors:
+    invalid_annotation_target: ignore
+
+linter:
+  rules:
+    prefer_single_quotes: true
+    avoid_unnecessary_containers: true
+    avoid_web_libraries_in_flutter: true
+    use_key_in_widget_constructors: true
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
+    sort_child_properties_last: true
+    sized_box_for_whitespace: true

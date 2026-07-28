@@ -1,0 +1,7 @@
+Reviews Rules Reminder:
+- allow read: true
+- allow create: signed-in user where userId == auth.uid
+- allow update/delete: admin or owner
+- admin can approve by updating isApproved
+
+If you use the rules file I provided earlier, you're already good.
