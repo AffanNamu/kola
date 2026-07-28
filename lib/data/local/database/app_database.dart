@@ -15,14 +15,13 @@ class AppDatabase extends _$AppDatabase {
   @override
   int get schemaVersion => 1;
 
-  // Cart queries
   Future<List<CartItem>> getCartItems() => select(cartItems).get();
 
   Stream<List<CartItem>> watchCartItems() => select(cartItems).watch();
 
   Future<int> cartCount() async {
     final rows = await getCartItems();
-    return rows.fold(0, (sum, r) => sum + r.quantity);
+    return rows.fold<int>(0, (sum, r) => sum + r.quantity);
   }
 
   Future<void> upsertCartItem(CartItemsCompanion item) async {

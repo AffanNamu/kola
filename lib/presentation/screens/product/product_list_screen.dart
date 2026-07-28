@@ -69,7 +69,6 @@ class _AllProductsView extends ConsumerWidget {
     final featured = ref.watch(featuredProductsProvider);
     final newArrivals = ref.watch(newArrivalsProvider);
 
-    // Ensure data is loaded at least once (safe in build; will no-op if already loaded)
     Future.microtask(() {
       ref.read(featuredProductsProvider.notifier).load();
       ref.read(newArrivalsProvider.notifier).load();
@@ -81,7 +80,10 @@ class _AllProductsView extends ConsumerWidget {
 
     final list = dedupe(combined);
 
-    if (featured is _Loading || newArrivals is _Loading) {
+    final isLoading = featured.maybeWhen(loading: () => true, orElse: () => false) ||
+        newArrivals.maybeWhen(loading: () => true, orElse: () => false);
+
+    if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 

@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/cart/cart_item_model.dart';
 import '../../../services/local_storage_service.dart';
@@ -63,7 +64,6 @@ class CartController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final id = _makeId(productId, variantId);
-      // If exists -> increment
       final current = await (_db.select(_db.cartItems)..where((t) => t.id.equals(id))).getSingleOrNull();
       final newQty = (current?.quantity ?? 0) + quantity;
       await _db.upsertCartItem(
@@ -71,10 +71,10 @@ class CartController extends StateNotifier<AsyncValue<void>> {
           id: id,
           productId: productId,
           productName: name,
-          productImage: image,
+          productImage: Value(image),
           price: price,
-          quantity: newQty,
-          maxStock: maxStock,
+          quantity: Value(newQty),
+          maxStock: Value(maxStock),
           variantId: Value(variantId),
           variantName: Value(variantName),
           sku: Value(sku),

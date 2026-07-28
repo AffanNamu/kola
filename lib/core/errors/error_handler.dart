@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'app_exception.dart';
 import 'failure.dart';
@@ -17,7 +16,7 @@ class ErrorHandler {
 
     if (exception is FirebaseException) {
       return FirestoreFailure(
-        message: _getFirestoreMessage(exception.code ?? 'unknown'),
+        message: _getFirestoreMessage(exception.code),
         code: exception.code,
       );
     }
@@ -147,13 +146,15 @@ class ErrorHandler {
         if (statusCode == 403) return 'Access denied.';
         if (statusCode == 404) return 'Resource not found.';
         if (statusCode == 500) return 'Server error. Please try again later.';
-        return 'Network error (${statusCode}). Please try again.';
+        return 'Network error ($statusCode). Please try again.';
       case DioExceptionType.cancel:
         return 'Request was cancelled.';
       case DioExceptionType.connectionError:
         return 'No internet connection. Please check your network.';
       case DioExceptionType.badCertificate:
         return 'Security certificate error.';
+      case DioExceptionType.transformTimeout:
+        return 'Failed to process the response. Please try again.';
       case DioExceptionType.unknown:
         return 'An unexpected network error occurred.';
     }

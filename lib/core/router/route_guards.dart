@@ -1,5 +1,7 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../constants/route_constants.dart';
+import '../../data/models/user/user_model.dart';
 
 class RouteGuards {
   RouteGuards._();
@@ -13,7 +15,7 @@ class RouteGuards {
   ];
 
   static const List<String> _adminRoutes = [
-    '/admin',
+    RouteConstants.adminDashboard,
   ];
 
   static const List<String> _authRequiredRoutes = [
@@ -27,7 +29,7 @@ class RouteGuards {
     RouteConstants.support,
   ];
 
-  static String? redirect(AsyncValue authState, GoRouterState state) {
+  static String? redirect(AsyncValue<UserModel?> authState, GoRouterState state) {
     final currentPath = state.matchedLocation;
 
     return authState.when(
@@ -37,30 +39,26 @@ class RouteGuards {
         final isPublicRoute = _publicRoutes.any(
           (route) => currentPath.startsWith(route),
         );
-        final isAdminRoute = currentPath.startsWith('/admin');
+        final isAdminRoute = _adminRoutes.any(
+          (route) => currentPath.startsWith(route),
+        );
         final isSplash = currentPath == RouteConstants.splash;
 
-        // Always allow splash
         if (isSplash) return null;
 
-        // If logged in and trying to access auth routes, go home
         if (isLoggedIn && isPublicRoute && !isSplash) {
           if (isAdmin) return RouteConstants.adminDashboard;
           return RouteConstants.home;
         }
 
-        // If not logged in and trying to access protected routes
         if (!isLoggedIn) {
           final needsAuth = _authRequiredRoutes.any(
             (route) => currentPath.startsWith(route),
           );
           if (needsAuth) return RouteConstants.login;
-
-          // Block admin routes for non-logged-in users
           if (isAdminRoute) return RouteConstants.login;
         }
 
-        // Block admin routes for non-admin users
         if (isLoggedIn && isAdminRoute && !isAdmin) {
           return RouteConstants.home;
         }
@@ -71,34 +69,4 @@ class RouteGuards {
       error: (_, __) => RouteConstants.login,
     );
   }
-}
-
-// AuthState wrapper - used by route guards
-class AuthUserState {
-  final String? uid;
-  final String? role;
-  final bool isEmailVerified;
-
-  const AuthUserState({
-    this.uid,
-    this.role,
-    this.isEmailVerified = false,
-  });
-
-  bool get isLoggedIn => uid != null;
-  bool get isAdmin => role == 'admin';
-  bool get isGuest => role == 'guest';
-}
-
-// Riverpod AsyncValue alias for use in guards
-typedef AsyncValue<T> = _AsyncValue<T>;
-
-abstract class _AsyncValue<T> {
-  const _AsyncValue();
-
-  R when<R>({
-    required R Function(T data) data,
-    required R Function(Object error, StackTrace stackTrace) error,
-    required R Function() loading,
-  });
 }

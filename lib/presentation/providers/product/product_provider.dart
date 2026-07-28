@@ -1,11 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/product/product_model.dart';
 import '../../../data/remote/firestore/product_firestore.dart';
+import '../../../data/remote/cloudinary/cloudinary_service.dart';
 import '../../../data/repositories/product_repository_impl.dart';
 import 'product_state.dart';
 
 final productFirestoreProvider = Provider<ProductFirestore>((ref) {
   return const ProductFirestore();
+});
+
+final cloudinaryServiceProvider = Provider<CloudinaryService>((ref) {
+  return CloudinaryService();
 });
 
 final productRepositoryProvider = Provider<ProductRepositoryImpl>((ref) {
@@ -40,7 +45,6 @@ final productDetailProvider = FutureProvider.family<ProductModel?, String>(
   },
 );
 
-// Admin stream
 final adminProductsStreamProvider = StreamProvider<List<ProductModel>>((ref) {
   final repo = ref.read(productRepositoryProvider);
   return repo.watchAdminProducts();

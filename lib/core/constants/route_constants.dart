@@ -29,6 +29,9 @@ class RouteConstants {
   static const String support = '/support';
   static const String createTicket = '/support/create';
 
+  static const String profile = '/profile';
+  static const String addresses = '/profile/addresses';
+
   // Admin
   static const String adminDashboard = '/admin';
   static const String adminProducts = '/admin/products';
@@ -43,6 +46,8 @@ class RouteConstants {
 
   static const String adminPayments = '/admin/payments';
   static const String adminPaymentDetail = '/admin/payments/:paymentId';
+
+  static const String adminReviews = '/admin/reviews';
 
   static const String adminSettings = '/admin/settings';
 }
