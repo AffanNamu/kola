@@ -8,14 +8,7 @@
 build/
 *.iml
 
-# Android
-android/local.properties
-android/.gradle/
-android/captures/
-android/gradlew
-android/gradlew.bat
-android/gradle/wrapper/gradle-wrapper.jar
-*.jks
+
 *.keystore
 
 # iOS
@@ -24,15 +17,6 @@ ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
 ios/Runner/GeneratedPluginRegistrant.*
-
-# Firebase
-google-services.json
-GoogleService-Info.plist
-firebase_options.dart
-lib/firebase_options.dart
-
-# Cloudinary secrets
-lib/core/constants/cloudinary_constants.dart
 
 # Environment
 .env
