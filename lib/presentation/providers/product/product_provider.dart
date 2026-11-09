@@ -10,7 +10,7 @@ final productFirestoreProvider = Provider<ProductFirestore>((ref) {
 });
 
 final cloudinaryServiceProvider = Provider<CloudinaryService>((ref) {
-  return CloudinaryService();
+  return CloudinaryService.withClient();
 });
 
 final productRepositoryProvider = Provider<ProductRepositoryImpl>((ref) {
