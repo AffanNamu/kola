@@ -73,6 +73,12 @@ final authStateProvider = StreamProvider<UserModel?>((ref) {
       // Authentication must remain usable when the profile document is unavailable.
     }
 
+    if (existing != null && !existing.isActive && uid != _superAdminUid) {
+      await auth.signOut();
+      controller.add(null);
+      return;
+    }
+
     final model = (existing ??
             UserModel(
               uid: uid,
