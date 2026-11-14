@@ -121,12 +121,7 @@ service cloud.firestore {
       allow read: if isAdmin() || isOwner(resource.data.userId);
 
       // Client can create a pending payment record, never mark it successful.
-      allow create: if isCustomer()
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.status == 'pending'
-        && request.resource.data.verified == false
-        && request.resource.data.amount is number
-        && request.resource.data.amount >= 0;
+      allow create: if false;
 
       // Verification results must be written by a trusted backend/admin.
       allow update, delete: if false;
