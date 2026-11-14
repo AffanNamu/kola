@@ -13,6 +13,35 @@ final userFirestoreProvider = Provider<UserFirestore>((ref) {
   return const UserFirestore();
 });
 
+String authErrorMessage(Object error) {
+  if (error is fb.FirebaseAuthException) {
+    switch (error.code) {
+      case 'invalid-credential':
+      case 'wrong-password':
+      case 'user-not-found':
+        return 'The email or password is incorrect. Use the same email address you registered with.';
+      case 'email-already-in-use':
+        return 'An account already exists with this email. Sign in instead.';
+      case 'weak-password':
+        return 'Choose a stronger password with at least 8 characters.';
+      case 'invalid-email':
+        return 'Enter a valid email address.';
+      case 'operation-not-allowed':
+        return 'This sign-in method is not enabled in Firebase Authentication. Enable it in the Firebase Console.';
+      case 'too-many-requests':
+        return 'Too many attempts. Please wait a little and try again.';
+      case 'network-request-failed':
+        return 'Network error. Check your internet connection and try again.';
+      default:
+        return error.message ?? 'Authentication failed. Please try again.';
+    }
+  }
+  if (error is fb.FirebaseException && error.code == 'permission-denied') {
+    return 'Firebase denied access to the user profile. Check the Firestore security rules.';
+  }
+  return error.toString();
+}
+
 final authStateProvider = StreamProvider<UserModel?>((ref) {
   final auth = ref.watch(firebaseAuthProvider);
   final userFs = ref.watch(userFirestoreProvider);
@@ -38,7 +67,7 @@ final authStateProvider = StreamProvider<UserModel?>((ref) {
               displayName: fbUser.displayName ?? '',
               phoneNumber: fbUser.phoneNumber ?? '',
               photoUrl: fbUser.photoURL ?? '',
-              role: FirestoreConstants.roleCustomer,
+              role: fbUser.isAnonymous ? FirestoreConstants.roleGuest : FirestoreConstants.roleCustomer,
               isEmailVerified: fbUser.emailVerified,
               createdAt: DateTime.now(),
               updatedAt: DateTime.now(),
@@ -100,7 +129,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
           uid: uid,
           email: email,
           displayName: name,
-          role: FirestoreConstants.roleCustomer,
+          role: fbUser.isAnonymous ? FirestoreConstants.roleGuest : FirestoreConstants.roleCustomer,
           isEmailVerified: false,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
