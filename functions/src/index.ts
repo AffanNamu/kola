@@ -137,11 +137,64 @@ export const verifyPayment = onCall({ secrets: [PAYSTACK_SECRET_KEY, FLUTTERWAVE
       throw new HttpsError("failed-precondition", "Payment is not linked to the expected order amount.");
     }
     if (p.verified === true && p.status === "success") return;
-    tx.update(paymentRef, { status: "success", verified: true, gatewayResponse: response.data ?? response, verifiedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+    tx.update(paymentRef, { status: "success", verified: true, gatewayTransactionId: response.data?.id ? String(response.data.id) : null, gatewayResponse: response.data ?? response, verifiedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
     tx.update(orderRef, { status: "paid", paidAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
   });
   if (isAdmin) await audit(request.auth.uid, "payment_verified_by_admin", paymentId, { gateway, orderId: payment.orderId });
   return { success: true, status: "success" };
+});
+
+export const refundOrderPayment = onCall({ secrets: [PAYSTACK_SECRET_KEY, FLUTTERWAVE_SECRET_KEY] }, async (request) => {
+  await requireAdmin(request.auth?.uid);
+  const { orderId } = request.data as { orderId?: string };
+  if (!orderId) throw new HttpsError("invalid-argument", "Order ID is required.");
+  const orderRef = db.collection("orders").doc(orderId);
+  const orderSnap = await orderRef.get();
+  if (!orderSnap.exists) throw new HttpsError("not-found", "Order not found.");
+  const order = orderSnap.data()!;
+  if (!order.paymentId || !["paid", "confirmed", "processing", "packed", "shipped", "delivered"].includes(String(order.status))) {
+    throw new HttpsError("failed-precondition", "This order cannot be refunded.");
+  }
+  const paymentRef = db.collection("payments").doc(String(order.paymentId));
+  const paymentSnap = await paymentRef.get();
+  if (!paymentSnap.exists) throw new HttpsError("not-found", "Linked payment not found.");
+  const payment = paymentSnap.data()!;
+  if (payment.status !== "success" || payment.verified !== true) throw new HttpsError("failed-precondition", "Only verified successful payments can be refunded.");
+
+  let gatewayResponse: any;
+  if (payment.gateway === "paystack") {
+    const res = await fetch("https://api.paystack.co/refund", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + PAYSTACK_SECRET_KEY.value(), "Content-Type": "application/json" },
+      body: JSON.stringify({ transaction: payment.reference }),
+    });
+    gatewayResponse = await res.json();
+    if (!res.ok || gatewayResponse.status !== true) throw new HttpsError("failed-precondition", "Paystack did not accept the refund request.");
+  } else if (payment.gateway === "flutterwave") {
+    const transactionId = String(payment.gatewayTransactionId || "");
+    if (!transactionId) throw new HttpsError("failed-precondition", "Flutterwave transaction ID is missing from the verified payment.");
+    const res = await fetch("https://api.flutterwave.com/v3/transactions/" + encodeURIComponent(transactionId) + "/refund", {
+      method: "POST",
+      headers: { Authorization: "Bearer " + FLUTTERWAVE_SECRET_KEY.value(), "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: payment.amount }),
+    });
+    gatewayResponse = await res.json();
+    if (!res.ok || gatewayResponse.status !== "success") throw new HttpsError("failed-precondition", "Flutterwave did not accept the refund request.");
+  } else {
+    throw new HttpsError("invalid-argument", "Unsupported payment gateway.");
+  }
+
+  await db.runTransaction(async (tx) => {
+    const freshOrder = await tx.get(orderRef);
+    const freshPayment = await tx.get(paymentRef);
+    if (!freshOrder.exists || !freshPayment.exists || freshPayment.data()?.status !== "success") {
+      throw new HttpsError("aborted", "Payment state changed while refunding. Refresh and try again.");
+    }
+    tx.update(paymentRef, { status: "refunded", refundedAt: FieldValue.serverTimestamp(), refundResponse: gatewayResponse, updatedAt: FieldValue.serverTimestamp() });
+    tx.update(orderRef, { status: "refunded", refundedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
+  });
+  await audit(request.auth!.uid, "payment_refunded", orderId, { paymentId: paymentRef.id, gateway: payment.gateway, amount: payment.amount });
+  return { success: true, status: "refunded" };
 });
 
 export const updateOrderFulfilment = onCall(async (request) => {
@@ -149,7 +202,7 @@ export const updateOrderFulfilment = onCall(async (request) => {
   const { orderId, status, trackingNumber, courierName, note } = request.data as {
     orderId?: string; status?: string; trackingNumber?: string; courierName?: string; note?: string;
   };
-  const allowed = ["confirmed", "processing", "packed", "shipped", "delivered", "refunded"];
+  const allowed = ["confirmed", "processing", "packed", "shipped", "delivered"];
   if (!orderId || !status || !allowed.includes(status)) throw new HttpsError("invalid-argument", "Invalid order transition.");
   const ref = db.collection("orders").doc(orderId);
   let previousStatus = "";
@@ -160,7 +213,6 @@ export const updateOrderFulfilment = onCall(async (request) => {
     const transitions: Record<string, string[]> = {
       paid: ["confirmed"], confirmed: ["processing"],
       processing: ["packed"], packed: ["shipped"], shipped: ["delivered"],
-      delivered: ["refunded"],
     };
     if (!transitions[current]?.includes(status)) throw new HttpsError("failed-precondition", "This order status transition is not allowed.");
     if (status === "shipped" && (!trackingNumber || !courierName)) throw new HttpsError("invalid-argument", "Courier and tracking number are required before shipping.");
