@@ -45,6 +45,7 @@ import '../../presentation/screens/support/ticket_detail_screen.dart';
 
 import '../../presentation/screens/admin/dashboard/admin_dashboard_screen.dart';
 import '../../presentation/screens/admin/customers/admin_customer_detail_screen.dart';
+import '../../presentation/screens/admin/customers/admin_customers_screen.dart';
 import '../../presentation/screens/admin/inventory/admin_inventory_screen.dart';
 import '../../presentation/screens/admin/coupons/admin_coupons_screen.dart';
 import '../../presentation/screens/admin/notifications/admin_notifications_screen.dart';
@@ -264,6 +265,10 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: RouteConstants.adminDashboard,
         builder: (_, __) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/admin/customers',
+        builder: (_, __) => const AdminCustomersScreen(),
       ),
       GoRoute(
         path: '/admin/customers/:customerId',
