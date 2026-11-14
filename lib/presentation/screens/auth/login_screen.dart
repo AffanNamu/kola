@@ -32,7 +32,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     await ref.read(authControllerProvider.notifier).signInEmail(
-          _email.text.trim(),
+          _email.text.trim().toLowerCase(),
           _password.text,
         );
 
@@ -40,7 +40,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     state.whenOrNull(
       error: (e, _) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text(authErrorMessage(e))),
         );
       },
     );
@@ -157,6 +157,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 await ref
                                     .read(authControllerProvider.notifier)
                                     .signInAnonymously();
+                                if (!mounted) return;
+                                final result = ref.read(authControllerProvider);
+                                result.whenOrNull(
+                                  error: (e, _) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(authErrorMessage(e))),
+                                    );
+                                  },
+                                );
                               },
                         child: const Text(AppStrings.continueAsGuest),
                       ),
