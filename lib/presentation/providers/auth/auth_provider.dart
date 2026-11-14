@@ -77,6 +77,7 @@ final authStateProvider = StreamProvider<UserModel?>((ref) {
       displayName: fbUser.displayName ?? existing?.displayName ?? '',
       photoUrl: fbUser.photoURL ?? existing?.photoUrl ?? '',
       phoneNumber: fbUser.phoneNumber ?? existing?.phoneNumber ?? '',
+      role: fbUser.isAnonymous ? FirestoreConstants.roleGuest : (existing?.role ?? FirestoreConstants.roleCustomer),
       isEmailVerified: fbUser.emailVerified,
       updatedAt: DateTime.now(),
     );
@@ -129,7 +130,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
           uid: uid,
           email: email,
           displayName: name,
-          role: fbUser.isAnonymous ? FirestoreConstants.roleGuest : FirestoreConstants.roleCustomer,
+          role: FirestoreConstants.roleCustomer,
           isEmailVerified: false,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
