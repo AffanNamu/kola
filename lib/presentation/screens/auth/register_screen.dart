@@ -36,7 +36,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     await ref.read(authControllerProvider.notifier).signUpEmail(
           _name.text.trim(),
-          _email.text.trim(),
+          _email.text.trim().toLowerCase(),
           _password.text,
         );
 
@@ -44,7 +44,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     state.whenOrNull(
       error: (e, _) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
+          SnackBar(content: Text(authErrorMessage(e))),
         );
       },
       data: (_) {
