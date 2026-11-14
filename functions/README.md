@@ -30,6 +30,7 @@ The functions use Node.js 20. Deploying requires the Firebase project to have th
 - `createPendingPayment`: Creates a pending payment using the order's server-stored total and links it to the order.
 - `verifyPayment`: Verifies Paystack or Flutterwave with server-held credentials, checks amount/currency/reference, then atomically marks the payment and order paid.
 - `updateOrderFulfilment`: Enforces allowed fulfilment transitions, shipping metadata and audit history.
+- `refundOrderPayment`: Requests a refund from the payment gateway, updates payment/order state and records the audit event.
 
 ## Event functions
 
