@@ -65,7 +65,7 @@ export const verifyPayment = onCall({ secrets: [PAYSTACK_SECRET_KEY, FLUTTERWAVE
     response = await res.json();
     if (!res.ok || response.status !== true || response.data?.status !== "success") throw new HttpsError("failed-precondition", "Paystack has not confirmed this payment.");
     const expectedKobo = Math.round(Number(payment.amount) * 100);
-    if (Number(response.data.amount) !== expectedKobo || response.data.reference !== reference) throw new HttpsError("failed-precondition", "Payment amount or reference does not match.");
+    if (Number(response.data.amount) !== expectedKobo || response.data.currency !== payment.currency || response.data.reference !== reference) throw new HttpsError("failed-precondition", "Payment amount or reference does not match.");
   } else if (gateway === "flutterwave") {
     const res = await fetch("https://api.flutterwave.com/v3/transactions/" + encodeURIComponent(reference) + "/verify", {
       headers: { Authorization: "Bearer " + FLUTTERWAVE_SECRET_KEY.value() },
@@ -91,6 +91,7 @@ export const verifyPayment = onCall({ secrets: [PAYSTACK_SECRET_KEY, FLUTTERWAVE
     tx.update(paymentRef, { status: "success", verified: true, gatewayResponse: response.data ?? response, verifiedAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
     tx.update(orderRef, { status: "paid", paidAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
   });
+  if (isAdmin) await audit(request.auth.uid, "payment_verified_by_admin", paymentId, { gateway, orderId: payment.orderId });
   return { success: true, status: "success" };
 });
 
@@ -152,19 +153,28 @@ export const aggregateProductSales = onDocumentUpdated("orders/{orderId}", async
   const before = event.data?.before.data();
   const after = event.data?.after.data();
   if (!before || !after || before.status === after.status || after.status !== "paid") return;
-  const items = Array.isArray(after.items) ? after.items : [];
-  const batch = db.batch();
-  for (const item of items) {
-    const productId = String(item.productId || "");
-    if (!productId) continue;
-    const quantity = Number(item.quantity || 0);
-    const revenue = Number(item.price || 0) * quantity;
-    const ref = db.collection("productSales").doc(productId);
-    batch.set(ref, {
-      productId, productName: String(item.productName || "Product"),
-      unitsSold: FieldValue.increment(quantity), revenue: FieldValue.increment(revenue),
-      paidOrders: FieldValue.increment(1), updatedAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
-  }
-  if (items.length) await batch.commit();
+  const orderRef = event.data!.after.ref;
+  await db.runTransaction(async (tx) => {
+    const freshOrder = await tx.get(orderRef);
+    const order = freshOrder.data();
+    if (!order || order.productSalesAggregatedAt) return;
+    const items = Array.isArray(order.items) ? order.items : [];
+    const entries = items.map((item: any) => ({
+      ref: db.collection("productSales").doc(String(item.productId || "")),
+      productId: String(item.productId || ""),
+      productName: String(item.productName || "Product"),
+      quantity: Number(item.quantity || 0),
+      revenue: Number(item.price || 0) * Number(item.quantity || 0),
+    })).filter((item: any) => item.productId && item.quantity > 0);
+    for (const item of entries) {
+      tx.set(item.ref, {
+        productId: item.productId, productName: item.productName,
+        unitsSold: FieldValue.increment(item.quantity),
+        revenue: FieldValue.increment(item.revenue),
+        paidOrders: FieldValue.increment(1),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    tx.update(orderRef, { productSalesAggregatedAt: FieldValue.serverTimestamp() });
+  });
 });
