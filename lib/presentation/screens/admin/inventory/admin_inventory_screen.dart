@@ -29,10 +29,11 @@ class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
       ]),
       actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')), FilledButton(onPressed: () { final value = int.tryParse(controller.text); if (value != null && value >= 0) Navigator.pop(ctx, value); }, child: const Text('Save stock'))],
     ));
+    final adjustmentNote = note.text.trim();
     controller.dispose(); note.dispose();
     if (result == null) return;
     try {
-      await FirebaseFirestore.instance.collection('products').doc(id).update({'stock': result, 'isAvailable': result > 0, 'updatedAt': FieldValue.serverTimestamp(), 'metadata.lastStockAdjustment': {'previous': current, 'next': result, 'note': note.text.trim()}});
+      await FirebaseFirestore.instance.collection('products').doc(id).update({'stock': result, 'isAvailable': result > 0, 'updatedAt': FieldValue.serverTimestamp(), 'metadata.lastStockAdjustment': {'previous': current, 'next': result, 'note': adjustmentNote}});
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inventory updated')));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Stock update failed: $e')));
