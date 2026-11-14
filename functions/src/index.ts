@@ -54,7 +54,7 @@ export const createPendingPayment = onCall(async (request) => {
   if (!orderSnap.exists) throw new HttpsError("not-found", "Order not found.");
   const order = orderSnap.data()!;
   if (order.userId !== request.auth.uid) throw new HttpsError("permission-denied", "This order does not belong to you.");
-  if (order.status !== "pending_payment") throw new HttpsError("failed-precondition", "This order is not awaiting payment.");
+  if (order.status !== "pending_payment" || order.paymentId) throw new HttpsError("failed-precondition", "This order already has a payment attempt or is not awaiting payment.");
   const duplicate = await db.collection("payments").where("reference", "==", reference).limit(1).get();
   if (!duplicate.empty) throw new HttpsError("already-exists", "This payment reference has already been used.");
   const paymentRef = db.collection("payments").doc();
@@ -117,7 +117,7 @@ export const verifyPayment = onCall({ secrets: [PAYSTACK_SECRET_KEY, FLUTTERWAVE
     if (!orderSnap.exists || !freshPayment.exists) throw new HttpsError("not-found", "Order or payment no longer exists.");
     const order = orderSnap.data()!;
     const p = freshPayment.data()!;
-    if (p.userId !== order.userId || p.orderId !== orderRef.id || Math.round(Number(order.total) * 100) !== Math.round(Number(p.amount) * 100)) {
+    if (p.userId !== order.userId || p.orderId !== orderRef.id || order.paymentId !== paymentRef.id || order.status !== "pending_payment" || Math.round(Number(order.total) * 100) !== Math.round(Number(p.amount) * 100)) {
       throw new HttpsError("failed-precondition", "Payment is not linked to the expected order amount.");
     }
     if (p.verified === true && p.status === "success") return;
