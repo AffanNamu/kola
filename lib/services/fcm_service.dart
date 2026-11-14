@@ -23,16 +23,20 @@ class FCMService {
 
     // Get token and store to Firestore if logged in
     try {
-      final token = await messaging.getToken();
-      if (token == null) return;
-
       final container = ProviderScope.containerOf(context);
       final auth = container.read(firebaseAuthProvider);
-      final uid = auth.currentUser?.uid;
-      if (uid == null) return;
-
       const userFs = UserFirestore();
-      await userFs.updateFcmToken(uid: uid, token: token);
+
+      Future<void> saveToken(String? token) async {
+        final uid = auth.currentUser?.uid;
+        if (uid == null || token == null || token.isEmpty) return;
+        await userFs.updateFcmToken(uid: uid, token: token);
+      }
+
+      await saveToken(await messaging.getToken());
+      messaging.onTokenRefresh.listen((token) {
+        saveToken(token);
+      });
     } catch (_) {
       // silent
     }
