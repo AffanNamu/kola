@@ -28,6 +28,20 @@ async function audit(actorUid: string, action: string, targetUid?: string, detai
   });
 }
 
+export const setCustomerRole = onCall(async (request) => {
+  if (!request.auth || request.auth.uid !== OWNER_UID) throw new HttpsError("permission-denied", "Only the Super Admin can change roles.");
+  const { uid, role } = request.data as { uid?: string; role?: string };
+  if (!uid || !["customer", "admin", "guest"].includes(String(role))) throw new HttpsError("invalid-argument", "A user UID and valid role are required.");
+  if (uid === OWNER_UID) throw new HttpsError("failed-precondition", "The Super Admin role is immutable.");
+  const userRef = db.collection("users").doc(uid);
+  const user = await userRef.get();
+  if (!user.exists) throw new HttpsError("not-found", "User profile not found.");
+  const previousRole = String(user.data()?.role || "customer");
+  await userRef.update({ role, updatedAt: FieldValue.serverTimestamp() });
+  await audit(request.auth.uid, "customer_role_changed", uid, { previousRole, role });
+  return { success: true, uid, role };
+});
+
 export const setCustomerAuthDisabled = onCall(async (request) => {
   await requireAdmin(request.auth?.uid);
   const { uid, disabled } = request.data as { uid?: string; disabled?: boolean };
