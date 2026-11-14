@@ -23,7 +23,7 @@ class _AdminCouponsScreenState extends State<AdminCouponsScreen> {
       decoration: const BoxDecoration(color: Color(0xFFF8FAF7), borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
         Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: const Color(0xFFD6DED6), borderRadius: BorderRadius.circular(5)))),
-        const SizedBox(height: 18), Text(id == null ? 'Create promotion' : 'Edit promotion', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w850)),
+        const SizedBox(height: 18), Text(id == null ? 'Create promotion' : 'Edit promotion', style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)),
         const SizedBox(height: 5), const Text('Set the offer rules customers will see at checkout.', style: TextStyle(color: Color(0xFF758078), fontSize: 12)),
         const SizedBox(height: 18),
         _Field(controller: code, label: 'Coupon code', hint: 'e.g. WELCOME10', capitalization: TextCapitalization.characters),
