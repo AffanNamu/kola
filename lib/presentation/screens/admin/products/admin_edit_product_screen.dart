@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 import '../../../providers/product/product_provider.dart';
 import '../../../widgets/common/app_network_image.dart';
 
@@ -31,6 +32,7 @@ class _AdminEditProductScreenState extends ConsumerState<AdminEditProductScreen>
       final repo = ref.read(productRepositoryProvider);
       final failure = await repo.update(updated);
       if (failure != null) throw Exception(failure.message);
+      await const AdminAuditFirestore().log(action: 'product_flags_changed', targetUid: p.id, details: {'field': field, 'value': newValue});
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -61,6 +63,7 @@ class _AdminEditProductScreenState extends ConsumerState<AdminEditProductScreen>
       final repo = ref.read(productRepositoryProvider);
       final failure = await repo.softDelete(productId);
       if (failure != null) throw Exception(failure.message);
+      await const AdminAuditFirestore().log(action: 'product_soft_deleted', targetUid: productId);
       if (!mounted) return;
       context.pop();
     } catch (e) {
