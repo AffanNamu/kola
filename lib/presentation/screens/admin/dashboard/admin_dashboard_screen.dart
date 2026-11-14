@@ -17,6 +17,8 @@ class AdminDashboardScreen extends StatelessWidget {
       _Item('Promotions', 'Coupons & discounts', Icons.local_offer_rounded, const Color(0xFFFFE9E7), const Color(0xFFB44D43), () => context.push('/admin/coupons')),
       _Item('Reviews', 'Moderation queue', Icons.reviews_rounded, const Color(0xFFFFF5D9), const Color(0xFF9C741D), () => context.push(RouteConstants.adminReviews)),
       _Item('Messages', 'Customer announcements', Icons.campaign_rounded, const Color(0xFFE8F0F8), const Color(0xFF456C91), () => context.push('/admin/notifications')),
+_Item('Access & roles', 'Administrator permissions', Icons.admin_panel_settings_rounded, const Color(0xFFEDEBFA), const Color(0xFF6655A4), () => context.push('/admin/access')),
+      _Item('Activity log', 'Admin audit trail', Icons.history_rounded, const Color(0xFFE9EEF2), const Color(0xFF536D83), () => context.push('/admin/activity')),
       _Item('Reports', 'Sales & performance', Icons.query_stats_rounded, const Color(0xFFE8F3ED), const Color(0xFF347A56), () => context.push(RouteConstants.adminReports)),
       _Item('Categories', 'Shop organisation', Icons.category_rounded, const Color(0xFFF1EAF7), const Color(0xFF78549A), () => context.push('/admin/categories')),
       _Item('Banners', 'Storefront campaigns', Icons.view_carousel_rounded, const Color(0xFFFFEEDB), const Color(0xFFAA6C27), () => context.push('/admin/banners')),
