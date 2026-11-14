@@ -7,7 +7,11 @@ service cloud.firestore {
     }
 
     function isOwner(userId) {
-      return signedIn() && request.auth.uid == userId;
+      return signedIn()
+        && request.auth.uid == userId
+        && exists(/databases/$(database)/documents/users/$(userId))
+        && get(/databases/$(database)/documents/users/$(userId)).data.isActive != false
+        && get(/databases/$(database)/documents/users/$(userId)).data.isDeleted != true;
     }
 
     // Hard-coded project owner: this UID is the permanent super admin.
@@ -21,13 +25,15 @@ service cloud.firestore {
       return isSuperAdmin()
         || (signedIn()
           && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive != false);
     }
 
     function isCustomer() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'customer';
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'customer'
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive != false);
     }
 
     function validOwnerCreate() {
