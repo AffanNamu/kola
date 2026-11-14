@@ -20,9 +20,6 @@ class PaymentController extends StateNotifier<AsyncValue<void>> {
     required String orderId,
     required String gateway,
     required String reference,
-    required double amount,
-    String currency = 'USD',
-    Map<String, dynamic> metadata = const {},
   }) async {
     state = const AsyncLoading();
     String paymentId = '';
@@ -40,11 +37,8 @@ class PaymentController extends StateNotifier<AsyncValue<void>> {
     return paymentId;
   }
 
-  Future<void> verifyPaymentViaSupabase({
+  Future<void> verifyPaymentWithGateway({
     required String paymentId,
-    required String gateway,
-    required String referenceOrTransactionId,
-    required String orderId,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
