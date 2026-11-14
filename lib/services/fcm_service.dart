@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import '../data/remote/firestore/user_firestore.dart';
@@ -6,22 +7,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class FCMService {
   FCMService._();
+  static bool _initialized = false;
+  static StreamSubscription<String>? _tokenSubscription;
+  static StreamSubscription<dynamic>? _authSubscription;
 
   static Future<void> initialize(BuildContext context) async {
+    if (_initialized) return;
+    _initialized = true;
     final messaging = FirebaseMessaging.instance;
-
     await messaging.requestPermission();
 
-    // Foreground handler
     FirebaseMessaging.onMessage.listen((msg) {
+      if (!context.mounted) return;
       final title = msg.notification?.title ?? 'Notification';
       final body = msg.notification?.body ?? '';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$title: $body')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$title: $body')));
     });
 
-    // Get token and store to Firestore if logged in
     try {
       final container = ProviderScope.containerOf(context);
       final auth = container.read(firebaseAuthProvider);
@@ -34,11 +36,15 @@ class FCMService {
       }
 
       await saveToken(await messaging.getToken());
-      messaging.onTokenRefresh.listen((token) {
+      _tokenSubscription = messaging.onTokenRefresh.listen((token) {
         saveToken(token);
       });
+      _authSubscription = auth.authStateChanges().listen((user) async {
+        if (user == null) return;
+        await saveToken(await messaging.getToken());
+      });
     } catch (_) {
-      // silent
+      _initialized = false;
     }
   }
 }
