@@ -6,6 +6,8 @@ import '../../../core/constants/firestore_constants.dart';
 import '../../../data/models/user/user_model.dart';
 import '../../../data/remote/firestore/user_firestore.dart';
 
+const _googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+
 final firebaseAuthProvider = Provider<fb.FirebaseAuth>((ref) {
   return fb.FirebaseAuth.instance;
 });
@@ -17,6 +19,8 @@ final userFirestoreProvider = Provider<UserFirestore>((ref) {
 String authErrorMessage(Object error) {
   if (error is fb.FirebaseAuthException) {
     switch (error.code) {
+      case 'google-config-missing':
+        return 'Google sign-in setup is incomplete. Add the Web OAuth client ID as GOOGLE_SERVER_CLIENT_ID in GitHub Actions variables, then rebuild.';
       case 'sign-in-cancelled':
         return 'Google sign-in was cancelled.';
       case 'invalid-credential':
@@ -182,7 +186,15 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   Future<void> signInWithGoogle() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final googleUser = await GoogleSignIn().signIn();
+      if (_googleServerClientId.isEmpty) {
+        throw fb.FirebaseAuthException(
+          code: 'google-config-missing',
+          message: 'Google sign-in is not configured yet. Add GOOGLE_SERVER_CLIENT_ID to the app build settings.',
+        );
+      }
+      final googleUser = await GoogleSignIn(
+        serverClientId: _googleServerClientId,
+      ).signIn();
       if (googleUser == null) {
         throw fb.FirebaseAuthException(
           code: 'sign-in-cancelled',
