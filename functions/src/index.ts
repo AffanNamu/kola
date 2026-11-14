@@ -163,7 +163,7 @@ export const updateOrderFulfilment = onCall(async (request) => {
     });
   });
   await audit(request.auth!.uid, "order_status_changed", orderId, { from: previousStatus, to: status, trackingNumber: trackingNumber || null, courierName: courierName || null });
-  return { success: true, previousStatus: current, status };
+  return { success: true, previousStatus, status };
 });
 
 export const deliverInAppNotification = onDocumentCreated("notifications/{notificationId}", async (event) => {
