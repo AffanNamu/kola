@@ -75,24 +75,10 @@ class AdminPaymentDetailScreen extends ConsumerWidget {
                                     );
                               },
                         icon: const Icon(Icons.verified_outlined),
-                        label: Text(verifyState.isLoading ? 'Verifying...' : 'Verify via Supabase'),
+                        label: Text(verifyState.isLoading ? 'Verifying...' : 'Verify with payment gateway'),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton(
-                        onPressed: verifyState.isLoading
-                            ? null
-                            : () async {
-                                await ref
-                                    .read(paymentControllerProvider.notifier)
-                                    .adminMarkPaid(orderId: p.orderId, paymentId: p.id);
-                              },
-                        child: const Text('Mark Paid (Manual)'),
-                      ),
-                    ),
+
                   ],
                 ),
               ),
