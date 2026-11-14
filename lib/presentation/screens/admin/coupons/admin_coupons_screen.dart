@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 
 class AdminCouponsScreen extends StatefulWidget {
   const AdminCouponsScreen({super.key});
@@ -42,7 +43,9 @@ class _AdminCouponsScreenState extends State<AdminCouponsScreen> {
           final payload = {'code': code.text.trim().toUpperCase(), 'description': description.text.trim(), 'discountType': type, 'discountValue': value, 'minimumOrderAmount': min, 'usageLimit': maxUses, 'usageCount': existing?['usageCount'] ?? 0, 'perUserLimit': existing?['perUserLimit'] ?? 1, 'isActive': existing?['isActive'] ?? true, 'createdAt': existing?['createdAt'] ?? FieldValue.serverTimestamp(), 'updatedAt': FieldValue.serverTimestamp()};
           try {
             final collection = FirebaseFirestore.instance.collection('coupons');
-            if (id == null) { await collection.doc(code.text.trim().toUpperCase()).set(payload); } else { await collection.doc(id).update(payload); }
+            final couponId = id ?? code.text.trim().toUpperCase();
+            if (id == null) { await collection.doc(couponId).set(payload); } else { await collection.doc(couponId).update(payload); }
+            await const AdminAuditFirestore().log(action: id == null ? 'coupon_created' : 'coupon_updated', targetUid: couponId, details: {'code': code.text.trim().toUpperCase()});
             if (ctx.mounted) Navigator.pop(ctx, true);
           } catch (e) { if (ctx.mounted) ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(content: Text('Could not save coupon: $e'))); }
         }, icon: const Icon(Icons.check_rounded), label: Text(id == null ? 'Create coupon' : 'Save changes'))),
@@ -86,7 +89,7 @@ class _AdminCouponsScreenState extends State<AdminCouponsScreen> {
             const SizedBox(height: 14), Row(children: [
               _Pill(enabled ? 'LIVE' : 'PAUSED', enabled), const SizedBox(width: 8),
               Text('Used ' + (p['usageCount'] ?? 0).toString() + ' / ' + ((p['usageLimit'] ?? 0) == 0 ? '∞' : p['usageLimit'].toString()), style: const TextStyle(color: Color(0xFF778078), fontSize: 11)),
-              const Spacer(), IconButton(visualDensity: VisualDensity.compact, onPressed: () => _openCoupon(id: doc.id, existing: p), icon: const Icon(Icons.edit_outlined, size: 19)), Switch.adaptive(value: enabled, onChanged: (v) => doc.reference.update({'isActive': v, 'updatedAt': FieldValue.serverTimestamp()})),
+              const Spacer(), IconButton(visualDensity: VisualDensity.compact, onPressed: () => _openCoupon(id: doc.id, existing: p), icon: const Icon(Icons.edit_outlined, size: 19)), Switch.adaptive(value: enabled, onChanged: (v) async { await doc.reference.update({'isActive': v, 'updatedAt': FieldValue.serverTimestamp()}); await const AdminAuditFirestore().log(action: v ? 'coupon_activated' : 'coupon_paused', targetUid: doc.id); }),
             ]),
           ]));
         }),
