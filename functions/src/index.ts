@@ -43,6 +43,37 @@ export const setCustomerAuthDisabled = onCall(async (request) => {
   return { success: true, uid, disabled };
 });
 
+export const createPendingPayment = onCall(async (request) => {
+  if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
+  const { orderId, gateway, reference } = request.data as { orderId?: string; gateway?: string; reference?: string };
+  if (!orderId || !reference || !["paystack", "flutterwave"].includes(String(gateway))) {
+    throw new HttpsError("invalid-argument", "Order, supported gateway and reference are required.");
+  }
+  const orderRef = db.collection("orders").doc(orderId);
+  const orderSnap = await orderRef.get();
+  if (!orderSnap.exists) throw new HttpsError("not-found", "Order not found.");
+  const order = orderSnap.data()!;
+  if (order.userId !== request.auth.uid) throw new HttpsError("permission-denied", "This order does not belong to you.");
+  if (order.status !== "pending_payment") throw new HttpsError("failed-precondition", "This order is not awaiting payment.");
+  const duplicate = await db.collection("payments").where("reference", "==", reference).limit(1).get();
+  if (!duplicate.empty) throw new HttpsError("already-exists", "This payment reference has already been used.");
+  const paymentRef = db.collection("payments").doc();
+  const amount = Number(order.total);
+  if (!Number.isFinite(amount) || amount <= 0) throw new HttpsError("failed-precondition", "Order total is invalid.");
+  await db.runTransaction(async (tx) => {
+    tx.create(paymentRef, {
+      orderId, userId: request.auth!.uid, gateway, reference,
+      status: "pending", amount, currency: "USD", verified: false,
+      metadata: {}, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+    });
+    tx.update(orderRef, {
+      paymentId: paymentRef.id, paymentGateway: gateway, paymentReference: reference,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
+  return { paymentId: paymentRef.id, amount, currency: "USD" };
+});
+
 export const verifyPayment = onCall({ secrets: [PAYSTACK_SECRET_KEY, FLUTTERWAVE_SECRET_KEY] }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
   const { paymentId } = request.data as { paymentId?: string };
