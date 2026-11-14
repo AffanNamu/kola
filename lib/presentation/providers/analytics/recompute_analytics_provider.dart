@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/remote/firestore/admin_analytics_firestore.dart';
 import '../../../data/remote/firestore/recompute_analytics_service.dart';
+import 'admin_analytics_provider.dart';
 
 final recomputeAnalyticsServiceProvider = Provider<RecomputeAnalyticsService>((ref) {
   return RecomputeAnalyticsService(
