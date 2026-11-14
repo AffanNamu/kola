@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 
 const _ownerUid = 'L5E8FXohf6Y7HLify4ITu6eMvIZ2';
 
