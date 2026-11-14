@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -59,6 +60,43 @@ class AdminReportsScreen extends ConsumerWidget {
                     title: 'Products',
                     value: s.products.toString(),
                     icon: Icons.inventory_2_outlined,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Product revenue leaderboard',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 6),
+                      Text('Paid orders only • lifetime totals',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+                      const SizedBox(height: 12),
+                      StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                        stream: FirebaseFirestore.instance.collection('productSales')
+                            .orderBy('revenue', descending: true).limit(10).snapshots(),
+                        builder: (context, snapshot) {
+                          if (snapshot.hasError) return Text('Product analytics unavailable: ${snapshot.error}');
+                          if (!snapshot.hasData) return const LinearProgressIndicator();
+                          if (snapshot.data!.docs.isEmpty) return const Text('No paid product sales recorded yet.');
+                          return Column(children: snapshot.data!.docs.map((doc) {
+                            final data = doc.data();
+                            final name = (data['productName'] ?? doc.id).toString();
+                            final units = (data['unitsSold'] as num?)?.toInt() ?? 0;
+                            final revenue = (data['revenue'] as num?)?.toDouble() ?? 0;
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontWeight: FontWeight.w700)),
+                              subtitle: Text('$units units sold'),
+                              trailing: Text(CurrencyFormatter.usd(revenue),
+                                  style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
+                            );
+                          }).toList());
+                        },
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 12),
