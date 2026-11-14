@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -14,8 +15,7 @@ class AdminAccessManagementScreen extends StatelessWidget {
       return;
     }
     try {
-      await doc.reference.update({'role': role, 'updatedAt': FieldValue.serverTimestamp()});
-      await FirebaseFirestore.instance.collection('adminActivityLogs').add({'actorUid': FirebaseAuth.instance.currentUser?.uid, 'action': 'role_changed', 'targetUid': doc.id, 'details': {'newRole': role}, 'createdAt': FieldValue.serverTimestamp()});
+      await FirebaseFunctions.instance.httpsCallable('setCustomerRole').call({'uid': doc.id, 'role': role});
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Access role updated.')));
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Role update failed: $e')));
