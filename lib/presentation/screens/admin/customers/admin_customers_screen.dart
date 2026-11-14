@@ -68,7 +68,7 @@ class _AdminCustomersScreenState extends State<AdminCustomersScreen> {
               return Container(margin: const EdgeInsets.only(bottom: 9), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(18), border: Border.all(color: const Color(0xFFE8EDE8))), child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 leading: CircleAvatar(backgroundColor: const Color(0xFFE8F2EA), foregroundColor: AppColors.primary, child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.w800))),
-                title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w750)),
+                title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w700)),
                 subtitle: Padding(padding: const EdgeInsets.only(top: 4), child: Text(email, maxLines: 1, overflow: TextOverflow.ellipsis)),
                 trailing: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.end, children: [_Status(active ? 'Active' : 'Paused', active), const SizedBox(height: 5), const Icon(Icons.chevron_right, size: 18, color: Color(0xFF89938B))]),
                 onTap: () => context.push('/admin/customers/' + doc.id),
@@ -85,7 +85,7 @@ class _Metric extends StatelessWidget {
   const _Metric(this.label, this.value, this.icon, this.color);
   final String label, value; final IconData icon; final Color color;
   @override
-  Widget build(BuildContext context) => Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE8EDE8))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: color, size: 19), const SizedBox(height: 10), Text(value, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w850)), Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF778078)))]));
+  Widget build(BuildContext context) => Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE8EDE8))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: color, size: 19), const SizedBox(height: 10), Text(value, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w800)), Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF778078)))]));
 }
 class _Filter extends StatelessWidget {
   const _Filter(this.label, this.active, this.onTap);
