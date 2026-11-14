@@ -1,6 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+
+const _ownerUid = 'L5E8FXohf6Y7HLify4ITu6eMvIZ2';
 
 class AdminCustomerDetailScreen extends StatelessWidget {
   const AdminCustomerDetailScreen({super.key, required this.customerId});
@@ -55,7 +58,7 @@ class AdminCustomerDetailScreen extends StatelessWidget {
             _Section(title: 'Account controls', subtitle: 'Control customer access to the Kola experience', child: Column(children: [
               SwitchListTile.adaptive(contentPadding: EdgeInsets.zero, value: active, activeColor: AppColors.primary, title: const Text('Account access', style: TextStyle(fontWeight: FontWeight.w750)), subtitle: Text(active ? 'This account is currently active' : 'This account is currently deactivated'), onChanged: (value) => _setActive(context, value)),
               const Divider(height: 20),
-              Row(children: [const Expanded(child: Text('Account role', style: TextStyle(fontWeight: FontWeight.w750))), DropdownButton<String>(value: ['customer','admin','guest'].contains(role) ? role : 'customer', items: const [DropdownMenuItem(value: 'customer', child: Text('Customer')), DropdownMenuItem(value: 'admin', child: Text('Admin')), DropdownMenuItem(value: 'guest', child: Text('Guest'))], onChanged: (value) { if (value != null) _setRole(context, value); })]),
+              Row(children: [const Expanded(child: Text('Account role', style: TextStyle(fontWeight: FontWeight.w750))), DropdownButton<String>(value: ['customer','admin','guest'].contains(role) ? role : 'customer', items: const [DropdownMenuItem(value: 'customer', child: Text('Customer')), DropdownMenuItem(value: 'admin', child: Text('Admin')), DropdownMenuItem(value: 'guest', child: Text('Guest'))], onChanged: FirebaseAuth.instance.currentUser?.uid == _ownerUid ? (value) { if (value != null) _setRole(context, value); } : null)]),
               const SizedBox(height: 8),
               const Text('Role changes require administrator permission. Protect the owner account and never promote an untrusted user.', style: TextStyle(color: Color(0xFF778078), fontSize: 11, height: 1.4)),
             ])),
