@@ -7,6 +7,7 @@ import '../../../data/models/user/user_model.dart';
 import '../../../data/remote/firestore/user_firestore.dart';
 
 const _googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+const _superAdminUid = 'L5E8FXohf6Y7HLify4ITu6eMvIZ2';
 
 final firebaseAuthProvider = Provider<fb.FirebaseAuth>((ref) {
   return fb.FirebaseAuth.instance;
@@ -89,7 +90,9 @@ final authStateProvider = StreamProvider<UserModel?>((ref) {
       displayName: fbUser.displayName ?? existing?.displayName ?? '',
       photoUrl: fbUser.photoURL ?? existing?.photoUrl ?? '',
       phoneNumber: fbUser.phoneNumber ?? existing?.phoneNumber ?? '',
-      role: fbUser.isAnonymous ? FirestoreConstants.roleGuest : (existing?.role ?? FirestoreConstants.roleCustomer),
+      role: fbUser.uid == _superAdminUid
+          ? FirestoreConstants.roleAdmin
+          : (fbUser.isAnonymous ? FirestoreConstants.roleGuest : (existing?.role ?? FirestoreConstants.roleCustomer)),
       isEmailVerified: fbUser.emailVerified,
       updatedAt: DateTime.now(),
     );
