@@ -1,0 +1,214 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    // Admin status is stored in users/{uid}.role.
+    // Never allow a customer to assign or change their own role.
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function validOwnerCreate() {
+      return signedIn()
+        && request.resource.data.userId == request.auth.uid;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+
+      allow create: if isOwner(userId)
+        && request.resource.data.uid == userId
+        && request.resource.data.role in ['customer', 'guest']
+        && request.resource.data.isDeleted == false;
+
+      allow update: if isAdmin()
+        || (isOwner(userId)
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'email', 'displayName', 'phoneNumber', 'photoUrl',
+            'isEmailVerified', 'fcmToken', 'updatedAt', 'metadata'
+          ]));
+
+      allow delete: if isAdmin();
+    }
+
+    // Product catalogue: public reads only for visible, available products.
+    match /products/{productId} {
+      allow read: if isAdmin()
+        || (resource.data.isDeleted == false
+          && resource.data.isAvailable == true);
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if isAdmin() || resource.data.isActive == true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /productVariants/{variantId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Each customer can access only their own cart documents.
+    match /cart/{cartId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if validOwnerCreate();
+      allow update: if isAdmin()
+        || (isOwner(resource.data.userId)
+          && request.resource.data.userId == resource.data.userId);
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+
+    match /wishlists/{wishlistId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if validOwnerCreate();
+      allow update: if isAdmin()
+        || (isOwner(resource.data.userId)
+          && request.resource.data.userId == resource.data.userId);
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+
+    match /addresses/{addressId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if validOwnerCreate();
+      allow update: if isAdmin()
+        || (isOwner(resource.data.userId)
+          && request.resource.data.userId == resource.data.userId);
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+
+      // A customer may create only their own unpaid order.
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending_payment'
+        && request.resource.data.total is number
+        && request.resource.data.total >= 0;
+
+      // Order status, totals and fulfilment data are server/admin controlled.
+      // Customer cancellation should be implemented through a trusted backend.
+      allow update, delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+
+      // Client can create a pending payment record, never mark it successful.
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.verified == false
+        && request.resource.data.amount is number
+        && request.resource.data.amount >= 0;
+
+      // Verification results must be written by a trusted backend/admin.
+      allow update, delete: if isAdmin();
+    }
+
+    match /paymentLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if isAdmin()
+        || resource.data.isApproved == true
+        || (signedIn() && resource.data.userId == request.auth.uid);
+
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.isApproved == false
+        && request.resource.data.isDeleted == false
+        && request.resource.data.helpfulCount == 0
+        && request.resource.data.rating is number
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
+
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.userId == request.auth.uid
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.isApproved == resource.data.isApproved
+          && request.resource.data.isDeleted == resource.data.isDeleted
+          && request.resource.data.helpfulCount == resource.data.helpfulCount
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'title', 'body', 'images', 'updatedAt'
+          ]));
+
+      allow delete: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid);
+    }
+
+    match /banners/{bannerId} {
+      allow read: if isAdmin() || resource.data.isActive == true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /coupons/{couponId} {
+      allow read: if isAdmin() || resource.data.isActive == true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /inventory/{inventoryId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+        || (isOwner(resource.data.userId)
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'isRead', 'readAt'
+          ]));
+      allow delete: if isAdmin() || isOwner(resource.data.userId);
+    }
+
+    match /supportTickets/{ticketId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if validOwnerCreate();
+      allow update: if isAdmin()
+        || (isOwner(resource.data.userId)
+          && request.resource.data.userId == resource.data.userId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'subject', 'message', 'updatedAt'
+          ]));
+      allow delete: if isAdmin();
+    }
+
+    match /ticketMessages/{messageId} {
+      allow read: if isAdmin() || isOwner(resource.data.userId);
+      allow create: if validOwnerCreate();
+      allow update, delete: if isAdmin();
+    }
+
+    match /analytics/{documentId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // All collections not explicitly listed above are denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
