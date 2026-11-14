@@ -146,11 +146,9 @@ class OrderDetailScreen extends ConsumerWidget {
                                     : () async {
                                         await ref
                                             .read(paymentControllerProvider.notifier)
-                                            .verifyPaymentViaSupabase(
+                                            .verifyPaymentWithGateway(
                                               paymentId: latest.id,
-                                              gateway: latest.gateway,
-                                              referenceOrTransactionId: latest.reference,
-                                              orderId: o.id,
+                                              transactionId: latest.reference,
                                             );
                                       },
                                 icon: const Icon(Icons.verified_outlined),
