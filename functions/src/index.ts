@@ -215,3 +215,31 @@ export const aggregateProductSales = onDocumentUpdated("orders/{orderId}", async
     tx.update(orderRef, { productSalesAggregatedAt: FieldValue.serverTimestamp() });
   });
 });
+
+
+export const aggregateProductRefunds = onDocumentUpdated("orders/{orderId}", async (event) => {
+  const before = event.data?.before.data();
+  const after = event.data?.after.data();
+  if (!before || !after || before.status === after.status || after.status !== "refunded") return;
+  const orderRef = event.data!.after.ref;
+  await db.runTransaction(async (tx) => {
+    const freshOrder = await tx.get(orderRef);
+    const order = freshOrder.data();
+    if (!order || order.productSalesRefundedAt) return;
+    const items = Array.isArray(order.items) ? order.items : [];
+    const entries = items.map((item: any) => ({
+      ref: db.collection("productSales").doc(String(item.productId || "")),
+      productId: String(item.productId || ""),
+      quantity: Number(item.quantity || 0),
+      revenue: Number(item.price || 0) * Number(item.quantity || 0),
+    })).filter((item: any) => item.productId && item.quantity > 0);
+    for (const item of entries) {
+      tx.set(item.ref, {
+        refundedUnits: FieldValue.increment(item.quantity),
+        refundedRevenue: FieldValue.increment(item.revenue),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    tx.update(orderRef, { productSalesRefundedAt: FieldValue.serverTimestamp() });
+  });
+});
