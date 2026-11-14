@@ -134,7 +134,7 @@ export const deliverInAppNotification = onDocumentCreated("notifications/{notifi
   if (!uid) return;
   const user = await db.collection("users").doc(uid).get();
   const token = user.data()?.fcmToken;
-  if (typeof token !== "string" || token.isEmpty) return;
+  if (typeof token !== "string" || token.length === 0) return;
   try {
     await getMessaging().send({
       token, notification: { title: String(data.title || "Kola"), body: String(data.body || "") },
