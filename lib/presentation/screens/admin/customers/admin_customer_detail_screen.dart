@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/remote/firestore/admin_audit_firestore.dart';
@@ -12,8 +13,8 @@ class AdminCustomerDetailScreen extends StatelessWidget {
 
   Future<void> _setActive(BuildContext context, bool active) async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(customerId).update({'isActive': active, 'updatedAt': FieldValue.serverTimestamp()});
-      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(active ? 'Customer account activated' : 'Customer account deactivated')));
+      await FirebaseFunctions.instance.httpsCallable('setCustomerAuthDisabled').call({'uid': customerId, 'disabled': !active});
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(active ? 'Customer account enabled in Firebase Authentication' : 'Customer account disabled in Firebase Authentication')));
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not update account: $e')));
     }
