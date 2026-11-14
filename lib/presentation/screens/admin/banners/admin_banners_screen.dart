@@ -6,6 +6,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/route_constants.dart';
 import '../../../../data/models/banner/banner_model.dart';
+import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 import '../../../providers/banner/banner_provider.dart';
 import '../../../widgets/common/app_network_image.dart';
 
@@ -56,7 +57,7 @@ class AdminBannersScreen extends ConsumerWidget {
                 final b = banners[i];
                 return _BannerTile(
                   banner: b,
-                  onToggle: (v) => fs.update(b.copyWith(isActive: v)),
+                  onToggle: (v) async { await fs.update(b.copyWith(isActive: v)); await const AdminAuditFirestore().log(action: 'banner_visibility_changed', targetUid: b.id, details: {'isActive': v}); },
                 );
               },
             );
