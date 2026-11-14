@@ -1,27 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/supabase_constants.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../../data/models/payment/payment_model.dart';
 import '../../../data/remote/firestore/checkout_transaction_service.dart';
 import '../../../data/remote/firestore/payment_firestore.dart';
-import '../../../data/repositories/payment_repository_impl.dart';
-import '../../../data/remote/supabase/supabase_verify_service.dart';
 import '../auth/auth_provider.dart';
-import '../order/order_provider.dart';
 
 final paymentFirestoreProvider = Provider<PaymentFirestore>((ref) {
   return const PaymentFirestore();
-});
-
-final paymentRepositoryProvider = Provider<PaymentRepositoryImpl>((ref) {
-  return PaymentRepositoryImpl(ref.read(paymentFirestoreProvider));
-});
-
-final checkoutTxProvider = Provider<CheckoutTransactionService>((ref) {
-  return const CheckoutTransactionService();
-});
-
-final supabaseVerifyServiceProvider = Provider<SupabaseVerifyService>((ref) {
-  return SupabaseVerifyService.withClient();
 });
 
 final paymentControllerProvider =
@@ -82,75 +67,14 @@ class PaymentController extends StateNotifier<AsyncValue<void>> {
     required String orderId,
   }) async {
     state = const AsyncLoading();
-
     state = await AsyncValue.guard(() async {
-      final baseUrl = SupabaseConstants.verifyBaseUrl;
-      final verifier = ref.read(supabaseVerifyServiceProvider);
-
-      Map<String, dynamic> verifyResponse;
-
-      if (gateway == 'paystack') {
-        verifyResponse = await verifier.verifyPaystack(
-          baseUrl: baseUrl,
-          reference: referenceOrTransactionId,
-        );
-      } else if (gateway == 'flutterwave') {
-        verifyResponse = await verifier.verifyFlutterwave(
-          baseUrl: baseUrl,
-          transactionId: referenceOrTransactionId,
-        );
-      } else {
-        throw Exception('Unknown gateway: $gateway');
-      }
-
-      final ok = verifyResponse['success'] == true;
-      final status = (verifyResponse['status'] ?? '').toString();
-
-      final payRepo = ref.read(paymentRepositoryProvider);
-      final orderRepo = ref.read(orderRepositoryProvider);
-
-      if (ok && status == 'success') {
-        final f1 = await payRepo.updateStatus(
-          paymentId: paymentId,
-          status: 'success',
-          verified: true,
-          gatewayResponse: verifyResponse,
-        );
-        if (f1 != null) throw Exception(f1.message);
-
-        final f2 = await orderRepo.updateStatus(orderId: orderId, status: 'paid');
-        if (f2 != null) throw Exception(f2.message);
-      } else {
-        final f1 = await payRepo.updateStatus(
-          paymentId: paymentId,
-          status: 'failed',
-          verified: false,
-          gatewayResponse: verifyResponse,
-        );
-        if (f1 != null) throw Exception(f1.message);
+      final result = await FirebaseFunctions.instance
+          .httpsCallable('verifyPayment')
+          .call<Map<String, dynamic>>({'paymentId': paymentId});
+      if (result.data['success'] != true || result.data['status'] != 'success') {
+        throw Exception('The payment gateway has not confirmed this transaction.');
       }
     });
   }
 
-  Future<void> adminMarkPaid({
-    required String orderId,
-    required String paymentId,
-  }) async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      final payRepo = ref.read(paymentRepositoryProvider);
-      final orderRepo = ref.read(orderRepositoryProvider);
-
-      final f1 = await payRepo.updateStatus(
-        paymentId: paymentId,
-        status: 'success',
-        verified: true,
-        gatewayResponse: {'manual': true},
-      );
-      if (f1 != null) throw Exception(f1.message);
-
-      final f2 = await orderRepo.updateStatus(orderId: orderId, status: 'paid');
-      if (f2 != null) throw Exception(f2.message);
-    });
-  }
 }
