@@ -76,7 +76,7 @@ export const createPendingPayment = onCall(async (request) => {
 
 export const verifyPayment = onCall({ secrets: [PAYSTACK_SECRET_KEY, FLUTTERWAVE_SECRET_KEY] }, async (request) => {
   if (!request.auth) throw new HttpsError("unauthenticated", "Sign in required.");
-  const { paymentId } = request.data as { paymentId?: string };
+  const { paymentId, transactionId } = request.data as { paymentId?: string; transactionId?: string };
   if (!paymentId) throw new HttpsError("invalid-argument", "Payment ID is required.");
   const paymentRef = db.collection("payments").doc(paymentId);
   const paymentSnap = await paymentRef.get();
@@ -98,12 +98,14 @@ export const verifyPayment = onCall({ secrets: [PAYSTACK_SECRET_KEY, FLUTTERWAVE
     const expectedKobo = Math.round(Number(payment.amount) * 100);
     if (Number(response.data.amount) !== expectedKobo || response.data.currency !== payment.currency || response.data.reference !== reference) throw new HttpsError("failed-precondition", "Payment amount or reference does not match.");
   } else if (gateway === "flutterwave") {
-    const res = await fetch("https://api.flutterwave.com/v3/transactions/" + encodeURIComponent(reference) + "/verify", {
+    const gatewayTransactionId = String(transactionId || payment.gatewayTransactionId || "");
+    if (!gatewayTransactionId) throw new HttpsError("invalid-argument", "Flutterwave transaction ID is required.");
+    const res = await fetch("https://api.flutterwave.com/v3/transactions/" + encodeURIComponent(gatewayTransactionId) + "/verify", {
       headers: { Authorization: "Bearer " + FLUTTERWAVE_SECRET_KEY.value() },
     });
     response = await res.json();
     if (!res.ok || response.status !== "success" || response.data?.status !== "successful") throw new HttpsError("failed-precondition", "Flutterwave has not confirmed this payment.");
-    if (Math.round(Number(response.data.amount) * 100) !== Math.round(Number(payment.amount) * 100) || response.data.currency !== payment.currency) throw new HttpsError("failed-precondition", "Payment amount or currency does not match.");
+    if (response.data.tx_ref !== reference || Math.round(Number(response.data.amount) * 100) !== Math.round(Number(payment.amount) * 100) || response.data.currency !== payment.currency) throw new HttpsError("failed-precondition", "Payment amount or currency does not match.");
   } else {
     throw new HttpsError("invalid-argument", "Unsupported payment gateway.");
   }
