@@ -50,7 +50,10 @@ service cloud.firestore {
         && request.resource.data.role in ['customer', 'guest']
         && request.resource.data.isDeleted == false;
 
-      allow update: if (isAdmin() && request.resource.data.role == resource.data.role)
+      allow update: if (isAdmin()
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.isActive == resource.data.isActive
+          && request.resource.data.authDisabled == resource.data.authDisabled)
         || (isOwner(userId)
           && request.resource.data.uid == resource.data.uid
           && request.resource.data.role == resource.data.role
