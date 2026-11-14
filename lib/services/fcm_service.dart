@@ -12,6 +12,14 @@ class FCMService {
   static StreamSubscription<String>? _tokenSubscription;
   static StreamSubscription<fb.User?>? _authSubscription;
 
+  static Future<void> dispose() async {
+    await _tokenSubscription?.cancel();
+    await _authSubscription?.cancel();
+    _tokenSubscription = null;
+    _authSubscription = null;
+    _initialized = false;
+  }
+
   static Future<void> initialize(BuildContext context) async {
     if (_initialized) return;
     _initialized = true;
