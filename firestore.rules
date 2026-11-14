@@ -44,7 +44,7 @@ service cloud.firestore {
         && request.resource.data.role in ['customer', 'guest']
         && request.resource.data.isDeleted == false;
 
-      allow update: if isAdmin()
+      allow update: if (isAdmin() && (isSuperAdmin() || request.resource.data.role == resource.data.role))
         || (isOwner(userId)
           && request.resource.data.uid == resource.data.uid
           && request.resource.data.role == resource.data.role
@@ -216,6 +216,18 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if signedIn();
       allow write: if isAdmin();
+    }
+
+    match /adminBroadcasts/{broadcastId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /adminActivityLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.actorUid == request.auth.uid;
+      allow update, delete: if false;
     }
 
     // All collections not explicitly listed above are denied.
