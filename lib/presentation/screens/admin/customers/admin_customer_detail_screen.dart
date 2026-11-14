@@ -22,8 +22,7 @@ class AdminCustomerDetailScreen extends StatelessWidget {
 
   Future<void> _setRole(BuildContext context, String role) async {
     try {
-      await FirebaseFirestore.instance.collection('users').doc(customerId).update({'role': role, 'updatedAt': FieldValue.serverTimestamp()});
-      await const AdminAuditFirestore().log(action: 'customer_role_changed', targetUid: customerId, details: {'role': role});
+      await FirebaseFunctions.instance.httpsCallable('setCustomerRole').call({'uid': customerId, 'role': role});
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Customer role updated')));
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Could not update role: $e')));
