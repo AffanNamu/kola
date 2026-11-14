@@ -3,7 +3,6 @@ import '../../../core/constants/order_constants.dart';
 import '../../../core/utils/order_number.dart';
 import '../../../data/models/order/order_item_model.dart';
 import '../../../data/models/order/order_model.dart';
-import '../../../data/repositories/order_repository_impl.dart';
 import '../auth/auth_provider.dart';
 import '../cart/cart_provider.dart';
 import '../order/order_provider.dart';
@@ -43,8 +42,8 @@ class CheckoutController extends StateNotifier<AsyncValue<String?>> {
           .toList();
 
       final subtotal = items.fold<double>(0, (sum, x) => sum + x.total);
-      final shippingFee = 0.0;
-      final discount = 0.0;
+      const shippingFee = 0.0;
+      const discount = 0.0;
       final total = subtotal + shippingFee - discount;
 
       final order = OrderModel(
