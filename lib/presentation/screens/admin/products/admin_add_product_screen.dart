@@ -9,6 +9,7 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../data/models/product/product_model.dart';
 import '../../../../data/models/product/product_variant_model.dart';
 import '../../../../data/remote/cloudinary/cloudinary_service.dart';
+import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 import '../../../providers/category/category_provider.dart';
 import '../../../providers/product/product_provider.dart';
 import '../../../widgets/common/app_button.dart';
@@ -206,6 +207,7 @@ class _AdminAddProductScreenState extends ConsumerState<AdminAddProductScreen> {
       final (id, failure) = await repo.create(product);
 
       if (failure != null) throw Exception(failure.message);
+      await const AdminAuditFirestore().log(action: 'product_created', targetUid: id, details: {'name': product.name, 'sku': product.sku});
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
