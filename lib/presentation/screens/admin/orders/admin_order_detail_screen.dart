@@ -97,7 +97,7 @@ class _AdminOrderDetailScreenState extends ConsumerState<AdminOrderDetailScreen>
               ...order.items.map((item) => ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(item.productName, style: const TextStyle(fontWeight: FontWeight.w700)),
-                subtitle: Text('Qty: ${item.quantity} • ${item.variantName ?? 'Standard'}'),
+                subtitle: Text('Qty: ${item.quantity} • ${item.variantName.isEmpty ? 'Standard' : item.variantName}'),
                 trailing: Text((item.price * item.quantity).toStringAsFixed(2)),
               )),
             ])),
