@@ -19,6 +19,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
   String _paymentId = '';
   String _gateway = '';
   String _ref = '';
+  final _transactionId = TextEditingController();
 
   String _genRef() =>
       'KOLA-${DateTime.now().millisecondsSinceEpoch}-${Random().nextInt(9999)}';
@@ -26,7 +27,6 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
   Future<void> _createPendingPayment(String gateway) async {
     final uri = GoRouterState.of(context).uri;
     final orderId = uri.queryParameters['orderId'];
-    final amountStr = uri.queryParameters['amount'];
 
     if (orderId == null || orderId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -35,7 +35,6 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
       return;
     }
 
-    final amount = double.tryParse(amountStr ?? '') ?? 0.0;
     final reference = _genRef();
 
     setState(() {
@@ -43,6 +42,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
       _paymentId = '';
       _gateway = gateway;
       _ref = reference;
+      _transactionId.clear();
     });
 
     try {
@@ -77,6 +77,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
 
     await ref.read(paymentControllerProvider.notifier).verifyPaymentWithGateway(
           paymentId: _paymentId,
+          transactionId: _gateway == 'flutterwave' ? _transactionId.text.trim() : null,
         );
 
     final st = ref.read(paymentControllerProvider);
@@ -91,6 +92,9 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
       },
     );
   }
+
+  @override
+  void dispose() { _transactionId.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
@@ -157,6 +161,10 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
                   Text('Reference:', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900)),
                   const SizedBox(height: 6),
                   SelectableText(_ref),
+                  if (_gateway == 'flutterwave') ...[
+                    const SizedBox(height: 12),
+                    TextField(controller: _transactionId, decoration: const InputDecoration(labelText: 'Flutterwave transaction ID', border: OutlineInputBorder())),
+                  ],
                   const SizedBox(height: 14),
                   SizedBox(
                     width: double.infinity,
