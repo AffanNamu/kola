@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart' as fb;
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/firestore_constants.dart';
 import '../../../data/models/user/user_model.dart';
@@ -16,6 +17,8 @@ final userFirestoreProvider = Provider<UserFirestore>((ref) {
 String authErrorMessage(Object error) {
   if (error is fb.FirebaseAuthException) {
     switch (error.code) {
+      case 'sign-in-cancelled':
+        return 'Google sign-in was cancelled.';
       case 'invalid-credential':
       case 'wrong-password':
       case 'user-not-found':
@@ -173,6 +176,25 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await _auth.signOut();
+    });
+  }
+
+  Future<void> signInWithGoogle() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        throw fb.FirebaseAuthException(
+          code: 'sign-in-cancelled',
+          message: 'Google sign-in was cancelled.',
+        );
+      }
+      final googleAuth = await googleUser.authentication;
+      final credential = fb.GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      await _auth.signInWithCredential(credential);
     });
   }
 
