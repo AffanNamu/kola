@@ -3,7 +3,7 @@
   "private": true,
   "engines": { "node": "20" },
   "main": "lib/index.js",
-  "scripts": { "build": "tsc", "lint": "eslint --ext .ts src" },
+  "scripts": { "build": "tsc" },
   "dependencies": {
     "firebase-admin": "^13.0.2",
     "firebase-functions": "^6.3.2"
