@@ -44,6 +44,10 @@ import '../../presentation/screens/support/create_ticket_screen.dart';
 import '../../presentation/screens/support/ticket_detail_screen.dart';
 
 import '../../presentation/screens/admin/dashboard/admin_dashboard_screen.dart';
+import '../../presentation/screens/admin/customers/admin_customer_detail_screen.dart';
+import '../../presentation/screens/admin/inventory/admin_inventory_screen.dart';
+import '../../presentation/screens/admin/coupons/admin_coupons_screen.dart';
+import '../../presentation/screens/admin/notifications/admin_notifications_screen.dart';
 
 import '../../presentation/screens/admin/products/admin_products_screen.dart';
 import '../../presentation/screens/admin/products/admin_add_product_screen.dart';
@@ -260,6 +264,24 @@ GoRouter appRouter(AppRouterRef ref) {
       GoRoute(
         path: RouteConstants.adminDashboard,
         builder: (_, __) => const AdminDashboardScreen(),
+      ),
+      GoRoute(
+        path: '/admin/customers/:customerId',
+        builder: (c, s) => AdminCustomerDetailScreen(
+          customerId: s.pathParameters['customerId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/admin/inventory',
+        builder: (_, __) => const AdminInventoryScreen(),
+      ),
+      GoRoute(
+        path: '/admin/coupons',
+        builder: (_, __) => const AdminCouponsScreen(),
+      ),
+      GoRoute(
+        path: '/admin/notifications',
+        builder: (_, __) => const AdminNotificationsScreen(),
       ),
       GoRoute(
         path: RouteConstants.adminProducts,
