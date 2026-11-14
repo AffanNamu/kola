@@ -58,7 +58,12 @@ final authStateProvider = StreamProvider<UserModel?>((ref) {
     }
 
     final uid = fbUser.uid;
-    final existing = await userFs.getUser(uid);
+    UserModel? existing;
+    try {
+      existing = await userFs.getUser(uid);
+    } catch (_) {
+      // Authentication must remain usable when the profile document is unavailable.
+    }
 
     final model = (existing ??
             UserModel(
@@ -82,7 +87,11 @@ final authStateProvider = StreamProvider<UserModel?>((ref) {
       updatedAt: DateTime.now(),
     );
 
-    await userFs.createOrUpdateUser(model);
+    try {
+      await userFs.createOrUpdateUser(model);
+    } catch (_) {
+      // Do not block a valid Firebase session on profile synchronization.
+    }
     controller.add(model);
   });
 
@@ -125,17 +134,22 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
       await cred.user?.sendEmailVerification();
 
       final uid = cred.user!.uid;
-      await _userFs.createOrUpdateUser(
-        UserModel(
-          uid: uid,
-          email: email,
-          displayName: name,
-          role: FirestoreConstants.roleCustomer,
-          isEmailVerified: false,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
+      try {
+        await _userFs.createOrUpdateUser(
+          UserModel(
+            uid: uid,
+            email: email,
+            displayName: name,
+            role: FirestoreConstants.roleCustomer,
+            isEmailVerified: false,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        );
+      } catch (_) {
+        // Account creation and email verification should not be rolled back
+        // because the optional Firestore profile write failed.
+      }
     });
   }
 
@@ -165,20 +179,7 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   Future<void> signInAnonymously() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      final cred = await _auth.signInAnonymously();
-      final uid = cred.user!.uid;
-
-      await _userFs.createOrUpdateUser(
-        UserModel(
-          uid: uid,
-          email: '',
-          displayName: 'Guest',
-          role: FirestoreConstants.roleGuest,
-          isEmailVerified: false,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      );
+      await _auth.signInAnonymously();
     });
   }
 }
