@@ -61,14 +61,14 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       ])),
       const SizedBox(height: 16),
       Container(padding: const EdgeInsets.all(17), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(21), border: Border.all(color: const Color(0xFFE6ECE6))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Compose message', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w850)),
+        const Text('Compose message', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
         const SizedBox(height: 5), const Text('This creates a notification in each selected customer’s in-app inbox.', style: TextStyle(fontSize: 11, color: Color(0xFF778078))),
         const SizedBox(height: 16),
         TextField(controller: _title, maxLength: 70, decoration: _decoration('Notification title', 'A short, clear headline')),
         const SizedBox(height: 10),
         TextField(controller: _body, maxLines: 4, maxLength: 400, decoration: _decoration('Message', 'Write the message customers will receive...')),
         const SizedBox(height: 9),
-        const Text('Message category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w750)),
+        const Text('Message category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
         const SizedBox(height: 7),
         DropdownButtonFormField<String>(value: _type, decoration: _decoration('', 'Choose category'), items: const [
           DropdownMenuItem(value: 'promotion', child: Text('Promotion / Offer')),
@@ -77,7 +77,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
           DropdownMenuItem(value: 'payment', child: Text('Payment information')),
         ], onChanged: (v) { if (v != null) setState(() => _type = v); }),
         const SizedBox(height: 15),
-        const Text('Recipients', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w750)),
+        const Text('Recipients', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
         const SizedBox(height: 7),
         _AudienceTile(title: 'Active customers', subtitle: 'Customers whose accounts are currently active', selected: _audience == 'active', onTap: () => setState(() => _audience = 'active')),
         const SizedBox(height: 8),
@@ -86,7 +86,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
         SizedBox(width: double.infinity, child: FilledButton.icon(onPressed: _sending ? null : _send, icon: _sending ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Icon(Icons.send_rounded), label: Text(_sending ? 'Delivering…' : 'Deliver in-app notification'), style: FilledButton.styleFrom(backgroundColor: AppColors.primary, padding: const EdgeInsets.symmetric(vertical: 15)))),
       ])),
       const SizedBox(height: 18),
-      Row(children: [const Text('Recent broadcasts', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w850)), const Spacer(), const Icon(Icons.history, color: Color(0xFF78837A), size: 18)]),
+      Row(children: [const Text('Recent broadcasts', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)), const Spacer(), const Icon(Icons.history, color: Color(0xFF78837A), size: 18)]),
       const SizedBox(height: 10),
       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(stream: FirebaseFirestore.instance.collection('adminBroadcasts').orderBy('createdAt', descending: true).limit(15).snapshots(), builder: (context, snapshot) {
         if (snapshot.hasError) return Text('Broadcast history unavailable: ${snapshot.error}');
@@ -113,5 +113,5 @@ class _AudienceTile extends StatelessWidget {
   const _AudienceTile({required this.title, required this.subtitle, required this.selected, required this.onTap});
   final String title, subtitle; final bool selected; final VoidCallback onTap;
   @override
-  Widget build(BuildContext context) => InkWell(onTap: onTap, borderRadius: BorderRadius.circular(14), child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: selected ? const Color(0xFFEAF3EC) : const Color(0xFFFAFBF9), borderRadius: BorderRadius.circular(14), border: Border.all(color: selected ? AppColors.primary : const Color(0xFFE5EAE5))), child: Row(children: [Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: selected ? AppColors.primary : const Color(0xFF9AA49B), size: 19), const SizedBox(width: 10), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.w750, fontSize: 12)), const SizedBox(height: 3), Text(subtitle, style: const TextStyle(color: Color(0xFF778078), fontSize: 10))]))])));
+  Widget build(BuildContext context) => InkWell(onTap: onTap, borderRadius: BorderRadius.circular(14), child: Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: selected ? const Color(0xFFEAF3EC) : const Color(0xFFFAFBF9), borderRadius: BorderRadius.circular(14), border: Border.all(color: selected ? AppColors.primary : const Color(0xFFE5EAE5))), child: Row(children: [Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: selected ? AppColors.primary : const Color(0xFF9AA49B), size: 19), const SizedBox(width: 10), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12)), const SizedBox(height: 3), Text(subtitle, style: const TextStyle(color: Color(0xFF778078), fontSize: 10))]))])));
 }
