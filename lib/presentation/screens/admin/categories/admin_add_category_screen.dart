@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../data/models/category/category_model.dart';
+import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 import '../../../../data/remote/cloudinary/cloudinary_service.dart';
 import '../../../providers/product/product_provider.dart' show cloudinaryServiceProvider;
 import '../../../providers/category/category_provider.dart';
@@ -89,6 +90,7 @@ class _AdminAddCategoryScreenState extends ConsumerState<AdminAddCategoryScreen>
       final repo = ref.read(categoryRepositoryProvider);
       final (id, failure) = await repo.create(category);
       if (failure != null) throw Exception(failure.message);
+      await const AdminAuditFirestore().log(action: 'category_created', targetUid: id, details: {'name': category.name});
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
