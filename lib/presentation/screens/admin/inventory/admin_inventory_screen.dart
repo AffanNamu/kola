@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/utils/currency_formatter.dart';
+import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 
 class AdminInventoryScreen extends StatefulWidget {
   const AdminInventoryScreen({super.key});
@@ -34,6 +34,7 @@ class _AdminInventoryScreenState extends State<AdminInventoryScreen> {
     if (result == null) return;
     try {
       await FirebaseFirestore.instance.collection('products').doc(id).update({'stock': result, 'isAvailable': result > 0, 'updatedAt': FieldValue.serverTimestamp(), 'metadata.lastStockAdjustment': {'previous': current, 'next': result, 'note': adjustmentNote}});
+      await const AdminAuditFirestore().log(action: 'inventory_adjusted', targetUid: id, details: {'previousStock': current, 'newStock': result, 'note': adjustmentNote});
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Inventory updated')));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Stock update failed: $e')));
