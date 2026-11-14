@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../data/models/banner/banner_model.dart';
+import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 import '../../../../data/remote/cloudinary/cloudinary_service.dart';
 import '../../../providers/product/product_provider.dart' show cloudinaryServiceProvider;
 import '../../../providers/banner/banner_provider.dart';
@@ -74,6 +75,7 @@ class _AdminAddBannerScreenState extends ConsumerState<AdminAddBannerScreen> {
 
       final fs = ref.read(bannerFirestoreProvider);
       await fs.create(banner);
+      await const AdminAuditFirestore().log(action: 'banner_created', details: {'title': banner.title});
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
