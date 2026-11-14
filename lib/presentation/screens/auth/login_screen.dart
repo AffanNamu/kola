@@ -56,6 +56,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _password.text,
         );
 
+    if (!mounted) return;
     final state = ref.read(authControllerProvider);
     state.whenOrNull(
       error: (e, _) {
