@@ -10,12 +10,18 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
-    // Admin status is stored in users/{uid}.role.
+    // Hard-coded project owner: this UID is the permanent super admin.
+    // Regular admins are still granted access through users/{uid}.role.
+    function isSuperAdmin() {
+      return signedIn() && request.auth.uid == 'L5E8FXohf6Y7HLify4ITu6eMvIZ2';
+    }
+
     // Never allow a customer to assign or change their own role.
     function isAdmin() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isSuperAdmin()
+        || (signedIn()
+          && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
     }
 
     function isCustomer() {
