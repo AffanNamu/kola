@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 
 class AdminNotificationsScreen extends StatefulWidget {
   const AdminNotificationsScreen({super.key});
@@ -40,6 +41,7 @@ class _AdminNotificationsScreenState extends State<AdminNotificationsScreen> {
       }
       await batch.commit();
       await FirebaseFirestore.instance.collection('adminBroadcasts').add({'title': _title.text.trim(), 'body': _body.text.trim(), 'type': _type, 'audience': _audience, 'recipientCount': users.docs.length, 'createdBy': FirebaseAuth.instance.currentUser?.uid, 'createdAt': now, 'delivery': 'in_app'});
+      await const AdminAuditFirestore().log(action: 'customer_broadcast_sent', details: {'recipientCount': users.docs.length, 'type': _type});
       _title.clear(); _body.clear();
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('In-app notification delivered to ${users.docs.length} customers.')));
     } catch (e) {
