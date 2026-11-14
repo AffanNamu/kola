@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -32,14 +33,12 @@ class _AdminOrderDetailScreenState extends ConsumerState<AdminOrderDetailScreen>
   Future<void> _saveStatus() async {
     setState(() => _saving = true);
     try {
-      final repo = ref.read(orderRepositoryProvider);
-      final failure = await repo.updateStatus(
-        orderId: widget.orderId,
-        status: _status,
-        trackingNumber: _tracking.text.trim().isEmpty ? null : _tracking.text.trim(),
-        courierName: _courier.text.trim().isEmpty ? null : _courier.text.trim(),
-      );
-      if (failure != null) throw Exception(failure.message);
+      await FirebaseFunctions.instance.httpsCallable('updateOrderFulfilment').call({
+        'orderId': widget.orderId,
+        'status': _status,
+        'trackingNumber': _tracking.text.trim(),
+        'courierName': _courier.text.trim(),
+      });
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order updated')));
@@ -51,28 +50,6 @@ class _AdminOrderDetailScreenState extends ConsumerState<AdminOrderDetailScreen>
     }
   }
 
-  Future<void> _markPaid() async {
-    final paymentId = _paymentId.text.trim();
-    if (paymentId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter Payment ID first.')));
-      return;
-    }
-
-    setState(() => _saving = true);
-    try {
-      await ref.read(paymentControllerProvider.notifier).adminMarkPaid(
-            orderId: widget.orderId,
-            paymentId: paymentId,
-          );
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Marked as PAID.')));
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
