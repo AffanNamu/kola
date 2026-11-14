@@ -99,7 +99,8 @@ export const verifyPayment = onCall({ secrets: [PAYSTACK_SECRET_KEY, FLUTTERWAVE
   const paymentSnap = await paymentRef.get();
   if (!paymentSnap.exists) throw new HttpsError("not-found", "Payment not found.");
   const payment = paymentSnap.data()!;
-  const isAdmin = request.auth.uid === OWNER_UID || (await db.collection("users").doc(request.auth.uid).get()).data()?.role === "admin";
+  const adminProfile = await db.collection("users").doc(request.auth.uid).get();
+  const isAdmin = request.auth.uid === OWNER_UID || (adminProfile.data()?.role === "admin" && adminProfile.data()?.isActive !== false);
   if (!isAdmin && payment.userId !== request.auth.uid) throw new HttpsError("permission-denied", "This payment does not belong to you.");
   if (payment.status === "success" && payment.verified === true) return { success: true, status: "success", alreadyVerified: true };
 
