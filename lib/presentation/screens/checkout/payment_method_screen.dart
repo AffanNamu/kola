@@ -52,8 +52,6 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
             orderId: orderId,
             gateway: gateway,
             reference: reference,
-            amount: amount,
-            metadata: const {'supabaseVerify': true},
           );
 
       if (!mounted) return;
@@ -77,11 +75,8 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
     final orderId = uri.queryParameters['orderId'] ?? '';
     if (_paymentId.isEmpty || _gateway.isEmpty || _ref.isEmpty) return;
 
-    await ref.read(paymentControllerProvider.notifier).verifyPaymentViaSupabase(
+    await ref.read(paymentControllerProvider.notifier).verifyPaymentWithGateway(
           paymentId: _paymentId,
-          gateway: _gateway,
-          referenceOrTransactionId: _ref,
-          orderId: orderId,
         );
 
     final st = ref.read(paymentControllerProvider);
@@ -126,7 +121,7 @@ class _PaymentMethodScreenState extends ConsumerState<PaymentMethodScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Create payment + verify via Supabase edge function.',
+                  'Create payment securely and verify it with the gateway.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.textSecondary,
                       ),
