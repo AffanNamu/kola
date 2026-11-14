@@ -44,6 +44,8 @@ import '../../presentation/screens/support/create_ticket_screen.dart';
 import '../../presentation/screens/support/ticket_detail_screen.dart';
 
 import '../../presentation/screens/admin/dashboard/admin_dashboard_screen.dart';
+import '../../presentation/screens/admin/access/admin_access_management_screen.dart';
+import '../../presentation/screens/admin/activity/admin_activity_logs_screen.dart';
 import '../../presentation/screens/admin/customers/admin_customer_detail_screen.dart';
 import '../../presentation/screens/admin/customers/admin_customers_screen.dart';
 import '../../presentation/screens/admin/inventory/admin_inventory_screen.dart';
@@ -266,6 +268,8 @@ GoRouter appRouter(AppRouterRef ref) {
         path: RouteConstants.adminDashboard,
         builder: (_, __) => const AdminDashboardScreen(),
       ),
+      GoRoute(path: '/admin/access', builder: (_, __) => const AdminAccessManagementScreen()),
+      GoRoute(path: '/admin/activity', builder: (_, __) => const AdminActivityLogsScreen()),
       GoRoute(
         path: '/admin/customers',
         builder: (_, __) => const AdminCustomersScreen(),
