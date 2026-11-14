@@ -35,6 +35,7 @@ export const setCustomerAuthDisabled = onCall(async (request) => {
   if (uid === OWNER_UID || uid === request.auth?.uid && disabled) throw new HttpsError("failed-precondition", "This account cannot be disabled.");
   const target = await getAuth().getUser(uid);
   await getAuth().updateUser(uid, { disabled });
+  if (disabled) await getAuth().revokeRefreshTokens(uid);
   await db.collection("users").doc(uid).set({
     isActive: !disabled, authDisabled: disabled, updatedAt: FieldValue.serverTimestamp(),
   }, { merge: true });
