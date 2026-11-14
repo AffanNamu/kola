@@ -48,7 +48,7 @@ _Item('Access & roles', 'Administrator permissions', Icons.admin_panel_settings_
           final item = sections[index];
           return Material(color: Colors.white, borderRadius: BorderRadius.circular(20), child: InkWell(onTap: item.onTap, borderRadius: BorderRadius.circular(20), child: Container(padding: const EdgeInsets.all(15), decoration: BoxDecoration(borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE6ECE6))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(width: 43, height: 43, decoration: BoxDecoration(color: item.tint, borderRadius: BorderRadius.circular(14)), child: Icon(item.icon, color: item.color, size: 21)),
-            const Spacer(), Text(item.title, style: const TextStyle(fontWeight: FontWeight.w850, fontSize: 14)), const SizedBox(height: 4), Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF7C877E), fontSize: 10)),
+            const Spacer(), Text(item.title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)), const SizedBox(height: 4), Text(item.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF7C877E), fontSize: 10)),
             const SizedBox(height: 8), Row(children: [Text('Open workspace', style: TextStyle(color: item.color, fontSize: 10, fontWeight: FontWeight.w800)), const Spacer(), Icon(Icons.arrow_outward_rounded, color: item.color, size: 15)]),
           ]))));
         }),
