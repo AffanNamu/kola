@@ -27,7 +27,7 @@ class AdminActivityLogsScreen extends StatelessWidget {
           return Container(margin: const EdgeInsets.only(bottom: 9), padding: const EdgeInsets.all(14), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE6ECE6))), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(width: 38, height: 38, decoration: BoxDecoration(color: const Color(0xFFE8F2EA), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.bolt_outlined, color: AppColors.primary, size: 19)),
             const SizedBox(width: 11), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(action, style: const TextStyle(fontWeight: FontWeight.w850, fontSize: 13)),
+              Text(action, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
               const SizedBox(height: 4), Text('By: ' + actor, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF778078), fontSize: 10)),
               if (target.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 3), child: Text('Target: ' + target, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Color(0xFF778078), fontSize: 10))),
               if (time != null) Padding(padding: const EdgeInsets.only(top: 5), child: Text('${time.day}/${time.month}/${time.year} • ${time.hour.toString().padLeft(2,'0')}:${time.minute.toString().padLeft(2,'0')}', style: const TextStyle(color: Color(0xFF8A948B), fontSize: 9))),
