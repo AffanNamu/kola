@@ -34,7 +34,7 @@ class RouteGuards {
     return authState.when(
       data: (user) {
         final isLoggedIn = user != null;
-        final isAdmin = user?.role == 'admin';
+        final isAdmin = user.role == 'admin';
         final isPublicRoute = _publicRoutes.any(
           (route) => currentPath.startsWith(route),
         );
