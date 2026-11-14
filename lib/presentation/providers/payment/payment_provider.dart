@@ -1,7 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import '../../../data/remote/firestore/payment_firestore.dart';
-import '../auth/auth_provider.dart';
 
 final paymentFirestoreProvider = Provider<PaymentFirestore>((ref) {
   return const PaymentFirestore();
@@ -9,12 +7,11 @@ final paymentFirestoreProvider = Provider<PaymentFirestore>((ref) {
 
 final paymentControllerProvider =
     StateNotifierProvider<PaymentController, AsyncValue<void>>((ref) {
-  return PaymentController(ref);
+  return PaymentController();
 });
 
 class PaymentController extends StateNotifier<AsyncValue<void>> {
-  PaymentController(this.ref) : super(const AsyncData(null));
-  final Ref ref;
+  PaymentController() : super(const AsyncData(null));
 
   Future<String> createPendingPaymentForOrder({
     required String orderId,
@@ -39,12 +36,13 @@ class PaymentController extends StateNotifier<AsyncValue<void>> {
 
   Future<void> verifyPaymentWithGateway({
     required String paymentId,
+    String? transactionId,
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       final result = await FirebaseFunctions.instance
           .httpsCallable('verifyPayment')
-          .call<Map<String, dynamic>>({'paymentId': paymentId});
+          .call<Map<String, dynamic>>({'paymentId': paymentId, if (transactionId != null && transactionId.isNotEmpty) 'transactionId': transactionId});
       if (result.data['success'] != true || result.data['status'] != 'success') {
         throw Exception('The payment gateway has not confirmed this transaction.');
       }
