@@ -41,7 +41,7 @@ class AdminAccessManagementScreen extends StatelessWidget {
               SizedBox(height: 5), Text('Grant the right level of access to trusted people. The owner account cannot be demoted.', style: TextStyle(color: Color(0xFFD6E7DA), fontSize: 12, height: 1.4)),
             ])),
             const SizedBox(height: 14),
-            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE6ECE6))), child: Row(children: [const Icon(Icons.verified_user_outlined, color: AppColors.primary), const SizedBox(width: 10), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(admins.toString() + ' administrator accounts', style: const TextStyle(fontWeight: FontWeight.w850)), const Text('Only Super Admin can change roles', style: TextStyle(color: Color(0xFF778078), fontSize: 10))]))])),
+            Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE6ECE6))), child: Row(children: [const Icon(Icons.verified_user_outlined, color: AppColors.primary), const SizedBox(width: 10), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(admins.toString() + ' administrator accounts', style: const TextStyle(fontWeight: FontWeight.w800)), const Text('Only Super Admin can change roles', style: TextStyle(color: Color(0xFF778078), fontSize: 10))]))])),
             const SizedBox(height: 17),
             const Text('Account permissions', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
             const SizedBox(height: 9),
