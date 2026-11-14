@@ -48,6 +48,8 @@ export const setCustomerAuthDisabled = onCall(async (request) => {
   if (!uid || typeof disabled !== "boolean") throw new HttpsError("invalid-argument", "A customer UID and disabled boolean are required.");
   if (uid === OWNER_UID || uid === request.auth?.uid && disabled) throw new HttpsError("failed-precondition", "This account cannot be disabled.");
   const target = await getAuth().getUser(uid);
+  const targetProfile = await db.collection("users").doc(uid).get();
+  if (targetProfile.data()?.role === "admin" && request.auth?.uid !== OWNER_UID) throw new HttpsError("permission-denied", "Only the Super Admin can disable another administrator.");
   await getAuth().updateUser(uid, { disabled });
   if (disabled) await getAuth().revokeRefreshTokens(uid);
   await db.collection("users").doc(uid).set({
