@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_auth/firebase_auth.dart' as fb;
 import 'package:flutter/material.dart';
 import '../data/remote/firestore/user_firestore.dart';
 import '../presentation/providers/auth/auth_provider.dart';
@@ -9,7 +10,7 @@ class FCMService {
   FCMService._();
   static bool _initialized = false;
   static StreamSubscription<String>? _tokenSubscription;
-  static StreamSubscription<dynamic>? _authSubscription;
+  static StreamSubscription<fb.User?>? _authSubscription;
 
   static Future<void> initialize(BuildContext context) async {
     if (_initialized) return;
