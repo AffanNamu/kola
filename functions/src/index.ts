@@ -136,29 +136,33 @@ export const updateOrderFulfilment = onCall(async (request) => {
   const allowed = ["confirmed", "processing", "packed", "shipped", "delivered", "cancelled", "refunded"];
   if (!orderId || !status || !allowed.includes(status)) throw new HttpsError("invalid-argument", "Invalid order transition.");
   const ref = db.collection("orders").doc(orderId);
-  const before = await ref.get();
-  if (!before.exists) throw new HttpsError("not-found", "Order not found.");
-  const current = String(before.data()?.status || "");
-  const transitions: Record<string, string[]> = {
-    paid: ["confirmed", "cancelled"], confirmed: ["processing", "cancelled"],
-    processing: ["packed", "cancelled"], packed: ["shipped"], shipped: ["delivered"],
-    delivered: ["refunded"],
-  };
-  if (!transitions[current]?.includes(status)) throw new HttpsError("failed-precondition", "This order status transition is not allowed.");
-  if (status === "shipped" && (!trackingNumber || !courierName)) throw new HttpsError("invalid-argument", "Courier and tracking number are required before shipping.");
-  const stamp = FieldValue.serverTimestamp();
-  await ref.update({
-    status, updatedAt: stamp,
-    ...(trackingNumber ? { trackingNumber } : {}),
-    ...(courierName ? { courierName } : {}),
-    ...(status === "confirmed" ? { confirmedAt: stamp } : {}),
-    ...(status === "shipped" ? { shippedAt: stamp } : {}),
-    ...(status === "delivered" ? { deliveredAt: stamp } : {}),
-    ...(status === "cancelled" ? { cancelledAt: stamp } : {}),
-    ...(note ? { fulfilmentNote: note } : {}),
-    statusHistory: FieldValue.arrayUnion({ from: current, to: status, actorUid: request.auth!.uid, at: new Date().toISOString(), note: note || "" }),
+  let previousStatus = "";
+  await db.runTransaction(async (tx) => {
+    const snapshot = await tx.get(ref);
+    if (!snapshot.exists) throw new HttpsError("not-found", "Order not found.");
+    const current = String(snapshot.data()?.status || "");
+    const transitions: Record<string, string[]> = {
+      paid: ["confirmed", "cancelled"], confirmed: ["processing", "cancelled"],
+      processing: ["packed", "cancelled"], packed: ["shipped"], shipped: ["delivered"],
+      delivered: ["refunded"],
+    };
+    if (!transitions[current]?.includes(status)) throw new HttpsError("failed-precondition", "This order status transition is not allowed.");
+    if (status === "shipped" && (!trackingNumber || !courierName)) throw new HttpsError("invalid-argument", "Courier and tracking number are required before shipping.");
+    previousStatus = current;
+    const stamp = FieldValue.serverTimestamp();
+    tx.update(ref, {
+      status, updatedAt: stamp,
+      ...(trackingNumber ? { trackingNumber } : {}),
+      ...(courierName ? { courierName } : {}),
+      ...(status === "confirmed" ? { confirmedAt: stamp } : {}),
+      ...(status === "shipped" ? { shippedAt: stamp } : {}),
+      ...(status === "delivered" ? { deliveredAt: stamp } : {}),
+      ...(status === "cancelled" ? { cancelledAt: stamp } : {}),
+      ...(note ? { fulfilmentNote: note } : {}),
+      statusHistory: FieldValue.arrayUnion({ from: current, to: status, actorUid: request.auth!.uid, at: new Date().toISOString(), note: note || "" }),
+    });
   });
-  await audit(request.auth!.uid, "order_status_changed", orderId, { from: current, to: status, trackingNumber: trackingNumber || null, courierName: courierName || null });
+  await audit(request.auth!.uid, "order_status_changed", orderId, { from: previousStatus, to: status, trackingNumber: trackingNumber || null, courierName: courierName || null });
   return { success: true, previousStatus: current, status };
 });
 
