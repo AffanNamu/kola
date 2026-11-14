@@ -57,9 +57,9 @@ class AdminCustomerDetailScreen extends StatelessWidget {
             ])),
             const SizedBox(height: 16),
             _Section(title: 'Account controls', subtitle: 'Control customer access to the Kola experience', child: Column(children: [
-              SwitchListTile.adaptive(contentPadding: EdgeInsets.zero, value: active, activeColor: AppColors.primary, title: const Text('Account access', style: TextStyle(fontWeight: FontWeight.w750)), subtitle: Text(active ? 'This account is currently active' : 'This account is currently deactivated'), onChanged: (value) => _setActive(context, value)),
+              SwitchListTile.adaptive(contentPadding: EdgeInsets.zero, value: active, activeColor: AppColors.primary, title: const Text('Account access', style: TextStyle(fontWeight: FontWeight.w700)), subtitle: Text(active ? 'This account is currently active' : 'This account is currently deactivated'), onChanged: (value) => _setActive(context, value)),
               const Divider(height: 20),
-              Row(children: [const Expanded(child: Text('Account role', style: TextStyle(fontWeight: FontWeight.w750))), DropdownButton<String>(value: ['customer','admin','guest'].contains(role) ? role : 'customer', items: const [DropdownMenuItem(value: 'customer', child: Text('Customer')), DropdownMenuItem(value: 'admin', child: Text('Admin')), DropdownMenuItem(value: 'guest', child: Text('Guest'))], onChanged: FirebaseAuth.instance.currentUser?.uid == _ownerUid ? (value) { if (value != null) _setRole(context, value); } : null)]),
+              Row(children: [const Expanded(child: Text('Account role', style: TextStyle(fontWeight: FontWeight.w700))), DropdownButton<String>(value: ['customer','admin','guest'].contains(role) ? role : 'customer', items: const [DropdownMenuItem(value: 'customer', child: Text('Customer')), DropdownMenuItem(value: 'admin', child: Text('Admin')), DropdownMenuItem(value: 'guest', child: Text('Guest'))], onChanged: FirebaseAuth.instance.currentUser?.uid == _ownerUid ? (value) { if (value != null) _setRole(context, value); } : null)]),
               const SizedBox(height: 8),
               const Text('Role changes require administrator permission. Protect the owner account and never promote an untrusted user.', style: TextStyle(color: Color(0xFF778078), fontSize: 11, height: 1.4)),
             ])),
@@ -90,7 +90,7 @@ class _Section extends StatelessWidget {
 class _Info extends StatelessWidget {
   const _Info(this.label, this.value); final String label, value;
   @override
-  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(vertical: 7), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [SizedBox(width: 112, child: Text(label, style: const TextStyle(color: Color(0xFF778078), fontSize: 12))), Expanded(child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w650)))]));
+  Widget build(BuildContext context) => Padding(padding: const EdgeInsets.symmetric(vertical: 7), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [SizedBox(width: 112, child: Text(label, style: const TextStyle(color: Color(0xFF778078), fontSize: 12))), Expanded(child: Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)))]));
 }
 class _Tag extends StatelessWidget {
   const _Tag(this.label, this.color); final String label; final Color color;
