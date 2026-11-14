@@ -29,6 +29,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _signInGoogle() async {
+    await ref.read(authControllerProvider.notifier).signInWithGoogle();
+    if (!mounted) return;
+    ref.read(authControllerProvider).whenOrNull(
+      error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authErrorMessage(e))),
+      ),
+    );
+  }
+
+  Future<void> _continueAsGuest() async {
+    await ref.read(authControllerProvider.notifier).signInAnonymously();
+    if (!mounted) return;
+    ref.read(authControllerProvider).whenOrNull(
+      error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authErrorMessage(e))),
+      ),
+    );
+  }
+
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     await ref.read(authControllerProvider.notifier).signInEmail(
@@ -149,25 +169,95 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         onPressed: _submit,
                         isLoading: isLoading,
                       ),
-                      const SizedBox(height: 10),
-                      OutlinedButton(
-                        onPressed: isLoading
-                            ? null
-                            : () async {
-                                await ref
-                                    .read(authControllerProvider.notifier)
-                                    .signInAnonymously();
-                                if (!mounted) return;
-                                final result = ref.read(authControllerProvider);
-                                result.whenOrNull(
-                                  error: (e, _) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(authErrorMessage(e))),
-                                    );
-                                  },
-                                );
-                              },
-                        child: const Text(AppStrings.continueAsGuest),
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          Expanded(child: Divider(color: AppColors.borderLight)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            child: Text(
+                              'OR CONTINUE WITH',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: AppColors.textTertiary,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 1.1,
+                                  ),
+                            ),
+                          ),
+                          Expanded(child: Divider(color: AppColors.borderLight)),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: OutlinedButton(
+                          onPressed: isLoading ? null : _signInGoogle,
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: const Color(0xFF202124),
+                            side: BorderSide(color: AppColors.borderLight),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 26,
+                                height: 26,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F3F4),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Text(
+                                  'G',
+                                  style: TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF4285F4),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Continue with Google',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: TextButton.icon(
+                          onPressed: isLoading ? null : _continueAsGuest,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            backgroundColor: AppColors.primary.withOpacity(0.07),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          icon: const Icon(Icons.storefront_outlined),
+                          label: const Text(
+                            'Continue as Guest',
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 7),
+                      Text(
+                        'Browse products and add to cart. Sign up when you are ready to pay.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.textSecondary,
+                              height: 1.4,
+                            ),
                       ),
                     ],
                   ),
