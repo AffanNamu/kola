@@ -70,7 +70,7 @@ class AdminReportsScreen extends ConsumerWidget {
                       Text('Product revenue leaderboard',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900)),
                       const SizedBox(height: 6),
-                      Text('Paid orders only • lifetime totals',
+                      Text('Paid orders less refunds • lifetime totals',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
                       const SizedBox(height: 12),
                       StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -84,7 +84,9 @@ class AdminReportsScreen extends ConsumerWidget {
                             final data = doc.data();
                             final name = (data['productName'] ?? doc.id).toString();
                             final units = (data['unitsSold'] as num?)?.toInt() ?? 0;
-                            final revenue = (data['revenue'] as num?)?.toDouble() ?? 0;
+                            final grossRevenue = (data['revenue'] as num?)?.toDouble() ?? 0;
+                            final refundedRevenue = (data['refundedRevenue'] as num?)?.toDouble() ?? 0;
+                            final revenue = grossRevenue - refundedRevenue;
                             return ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis,
