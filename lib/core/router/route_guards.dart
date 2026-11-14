@@ -34,7 +34,7 @@ class RouteGuards {
     return authState.when(
       data: (user) {
         final isLoggedIn = user != null;
-        final isAdmin = user.role == 'admin';
+        final isAdmin = user?.role == 'admin';
         final isPublicRoute = _publicRoutes.any(
           (route) => currentPath.startsWith(route),
         );
@@ -50,7 +50,7 @@ class RouteGuards {
           return RouteConstants.home;
         }
 
-        if (isLoggedIn && user?.role == 'guest' &&
+        if (isLoggedIn && user.role == 'guest' &&
             currentPath.startsWith(RouteConstants.checkout)) {
           return RouteConstants.register;
         }
