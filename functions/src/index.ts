@@ -149,7 +149,7 @@ export const updateOrderFulfilment = onCall(async (request) => {
   const { orderId, status, trackingNumber, courierName, note } = request.data as {
     orderId?: string; status?: string; trackingNumber?: string; courierName?: string; note?: string;
   };
-  const allowed = ["confirmed", "processing", "packed", "shipped", "delivered", "cancelled", "refunded"];
+  const allowed = ["confirmed", "processing", "packed", "shipped", "delivered", "refunded"];
   if (!orderId || !status || !allowed.includes(status)) throw new HttpsError("invalid-argument", "Invalid order transition.");
   const ref = db.collection("orders").doc(orderId);
   let previousStatus = "";
@@ -158,8 +158,8 @@ export const updateOrderFulfilment = onCall(async (request) => {
     if (!snapshot.exists) throw new HttpsError("not-found", "Order not found.");
     const current = String(snapshot.data()?.status || "");
     const transitions: Record<string, string[]> = {
-      paid: ["confirmed", "cancelled"], confirmed: ["processing", "cancelled"],
-      processing: ["packed", "cancelled"], packed: ["shipped"], shipped: ["delivered"],
+      paid: ["confirmed"], confirmed: ["processing"],
+      processing: ["packed"], packed: ["shipped"], shipped: ["delivered"],
       delivered: ["refunded"],
     };
     if (!transitions[current]?.includes(status)) throw new HttpsError("failed-precondition", "This order status transition is not allowed.");
