@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import '../../../core/constants/payment_constants.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/network/dio_client.dart';
 
@@ -11,10 +10,9 @@ class PaystackService {
 
   // NOTE: Paystack verify endpoint requires SECRET key in Authorization header.
   // We cannot safely do that in a client app.
-  // So for bootstrap we will NOT call Paystack verify directly from the app.
   //
-  // Instead: store transaction reference & "unverified" status, and verify manually
-  // from Paystack dashboard OR later add Cloud Function/Edge Function.
+  // Instead, payment references remain unverified until a trusted backend
+  // verifies them.
   Future<Map<String, dynamic>> verifyNotSupportedOnClient() async {
     throw const PaymentException(
       message:
@@ -22,7 +20,6 @@ class PaystackService {
     );
   }
 
-  // If you still want to call your own verification proxy later:
   Future<Map<String, dynamic>> verifyViaProxy({
     required String proxyUrl,
     required String reference,
