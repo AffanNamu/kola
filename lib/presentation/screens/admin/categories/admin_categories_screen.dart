@@ -6,6 +6,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/route_constants.dart';
 import '../../../../data/models/category/category_model.dart';
+import '../../../../data/remote/firestore/admin_audit_firestore.dart';
 import '../../../providers/category/category_provider.dart';
 import '../../../widgets/common/app_network_image.dart';
 
@@ -120,6 +121,7 @@ class _CategoryTile extends ConsumerWidget {
                 onChanged: (v) async {
                   final repo = ref.read(categoryRepositoryProvider);
                   await repo.update(category.copyWith(isActive: v));
+                  await const AdminAuditFirestore().log(action: 'category_visibility_changed', targetUid: category.id, details: {'isActive': v});
                 },
               ),
               Text(
