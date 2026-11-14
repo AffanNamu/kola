@@ -18,15 +18,13 @@ class AdminOrderDetailScreen extends ConsumerStatefulWidget {
 class _AdminOrderDetailScreenState extends ConsumerState<AdminOrderDetailScreen> {
   final _tracking = TextEditingController();
   final _courier = TextEditingController();
-  final _paymentId = TextEditingController();
-  String _status = OrderConstants.processing;
+  String _status = '';
   bool _saving = false;
 
   @override
   void dispose() {
     _tracking.dispose();
     _courier.dispose();
-    _paymentId.dispose();
     super.dispose();
   }
 
@@ -64,120 +62,14 @@ class _AdminOrderDetailScreenState extends ConsumerState<AdminOrderDetailScreen>
             final o = orders.where((x) => x.id == widget.orderId).firstOrNull;
             if (o == null) return const Center(child: Text('Order not found'));
 
-            if (_paymentId.text.isEmpty && (o.paymentId ?? '').isNotEmpty) {
-              _paymentId.text = o.paymentId!;
-            }
+
+            if (_status.isEmpty) _status = o.status;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(AppSizes.paddingMD),
               child: Column(
                 children: [
-                  _Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(o.orderNumber,
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                )),
-                        const SizedBox(height: 6),
-                        Text('User: ${o.userId}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                )),
-                        const SizedBox(height: 6),
-                        Text('Current status: ${o.status}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                )),
-                        const SizedBox(height: 6),
-                        Text('PaymentId: ${o.paymentId ?? '—'}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: AppColors.textSecondary,
-                                )),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Update Status',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                )),
-                        const SizedBox(height: 10),
-                        DropdownButtonFormField<String>(
-                          value: _status,
-                          items: const [
-                            DropdownMenuItem(value: OrderConstants.pendingPayment, child: Text('Pending Payment')),
-                            DropdownMenuItem(value: OrderConstants.paid, child: Text('Paid')),
-                            DropdownMenuItem(value: OrderConstants.confirmed, child: Text('Confirmed')),
-                            DropdownMenuItem(value: OrderConstants.processing, child: Text('Processing')),
-                            DropdownMenuItem(value: OrderConstants.packed, child: Text('Packed')),
-                            DropdownMenuItem(value: OrderConstants.shipped, child: Text('Shipped')),
-                            DropdownMenuItem(value: OrderConstants.delivered, child: Text('Delivered')),
-                            DropdownMenuItem(value: OrderConstants.cancelled, child: Text('Cancelled')),
-                            DropdownMenuItem(value: OrderConstants.refunded, child: Text('Refunded')),
-                          ],
-                          onChanged: _saving ? null : (v) => setState(() => _status = v ?? _status),
-                          decoration: const InputDecoration(prefixIcon: Icon(Icons.timeline), labelText: 'Status'),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _courier,
-                          decoration: const InputDecoration(prefixIcon: Icon(Icons.local_shipping_outlined), labelText: 'Courier Name (optional)'),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _tracking,
-                          decoration: const InputDecoration(prefixIcon: Icon(Icons.confirmation_number_outlined), labelText: 'Tracking Number (optional)'),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: _saving ? null : _saveStatus,
-                            child: _saving
-                                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2))
-                                : const Text('Save Status'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _Card(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Payment',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                )),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _paymentId,
-                          decoration: const InputDecoration(
-                            prefixIcon: Icon(Icons.payment_outlined),
-                            labelText: 'Payment ID (Firestore)',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton.icon(
-                            onPressed: _saving ? null : _markPaid,
-                            icon: const Icon(Icons.verified_outlined),
-                            label: const Text('Mark as Paid'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+
                 ],
               ),
             );
