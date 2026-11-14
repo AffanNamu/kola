@@ -71,7 +71,12 @@ jobs:
         run: flutter analyze --no-fatal-infos
 
       - name: Run tests
-        run: flutter test
+        run: |
+          if [ -d test ]; then
+            flutter test
+          else
+            echo "::warning::No test/ directory exists yet; skipping Flutter tests."
+          fi
 
       - name: Build APK (Debug)
         run: flutter build apk --debug --dart-define=SUPABASE_VERIFY_BASE_URL=${{ secrets.SUPABASE_VERIFY_BASE_URL }}
