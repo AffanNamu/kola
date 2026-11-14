@@ -30,9 +30,9 @@ class _AdminOrderDetailScreenState extends ConsumerState<AdminOrderDetailScreen>
 
   List<String> _allowedNext(String status) {
     switch (status) {
-      case 'paid': return ['confirmed', 'cancelled'];
-      case 'confirmed': return ['processing', 'cancelled'];
-      case 'processing': return ['packed', 'cancelled'];
+      case 'paid': return ['confirmed'];
+      case 'confirmed': return ['processing'];
+      case 'processing': return ['packed'];
       case 'packed': return ['shipped'];
       case 'shipped': return ['delivered'];
       case 'delivered': return ['refunded'];
