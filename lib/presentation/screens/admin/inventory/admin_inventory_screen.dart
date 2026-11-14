@@ -110,7 +110,7 @@ class _Stat extends StatelessWidget {
   const _Stat(this.label, this.value, this.icon, this.color);
   final String label, value; final IconData icon; final Color color;
   @override
-  Widget build(BuildContext context) => Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE7ECE7))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: color, size: 18), const SizedBox(height: 9), Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w850)), Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF7C877E)))]));
+  Widget build(BuildContext context) => Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE7ECE7))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(icon, color: color, size: 18), const SizedBox(height: 9), Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)), Text(label, style: const TextStyle(fontSize: 10, color: Color(0xFF7C877E)))]));
 }
 class _Filter extends StatelessWidget {
   const _Filter(this.label, this.active, this.onTap); final String label; final bool active; final VoidCallback onTap;
