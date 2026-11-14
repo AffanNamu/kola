@@ -19,7 +19,6 @@ class RouteGuards {
   ];
 
   static const List<String> _authRequiredRoutes = [
-    RouteConstants.cart,
     RouteConstants.checkout,
     RouteConstants.orders,
     RouteConstants.account,
@@ -49,6 +48,11 @@ class RouteGuards {
         if (isLoggedIn && isPublicRoute && !isSplash) {
           if (isAdmin) return RouteConstants.adminDashboard;
           return RouteConstants.home;
+        }
+
+        if (isLoggedIn && user?.role == 'guest' &&
+            currentPath.startsWith(RouteConstants.checkout)) {
+          return RouteConstants.register;
         }
 
         if (!isLoggedIn) {
