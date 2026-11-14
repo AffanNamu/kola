@@ -1,10 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 
-final paymentFirestoreProvider = Provider<PaymentFirestore>((ref) {
-  return const PaymentFirestore();
-});
-
 final paymentControllerProvider =
     StateNotifierProvider<PaymentController, AsyncValue<void>>((ref) {
   return PaymentController();
