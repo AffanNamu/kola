@@ -48,13 +48,19 @@ class _AdminOrderDetailScreenState extends ConsumerState<AdminOrderDetailScreen>
     }
     setState(() => _saving = true);
     try {
-      await FirebaseFunctions.instance.httpsCallable('updateOrderFulfilment').call({
-        'orderId': widget.orderId,
-        'status': _nextStatus,
-        'trackingNumber': _tracking.text.trim(),
-        'courierName': _courier.text.trim(),
-        'note': _note.text.trim(),
-      });
+      if (_nextStatus == 'refunded') {
+        await FirebaseFunctions.instance.httpsCallable('refundOrderPayment').call({
+          'orderId': widget.orderId,
+        });
+      } else {
+        await FirebaseFunctions.instance.httpsCallable('updateOrderFulfilment').call({
+          'orderId': widget.orderId,
+          'status': _nextStatus,
+          'trackingNumber': _tracking.text.trim(),
+          'courierName': _courier.text.trim(),
+          'note': _note.text.trim(),
+        });
+      }
       if (!mounted) return;
       setState(() { _nextStatus = null; _note.clear(); });
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order fulfilment updated and recorded.')));
