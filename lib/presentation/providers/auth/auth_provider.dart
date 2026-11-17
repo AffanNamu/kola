@@ -6,13 +6,10 @@ import '../../../core/constants/firestore_constants.dart';
 import '../../../data/models/user/user_model.dart';
 import '../../../data/remote/firestore/user_firestore.dart';
 
-// OAuth client IDs are public application identifiers, not secrets.
- // Keep a source fallback so Google sign-in cannot be disabled by a missing
- // GitHub Actions variable in an otherwise valid APK.
-const _googleServerClientId = String.fromEnvironment(
-  'GOOGLE_SERVER_CLIENT_ID',
-  defaultValue: '507347665820-molmtl92s3v7o1ehp7gio8pd0h96nn2e.apps.googleusercontent.com',
-);
+// Public Web OAuth client ID. The Android Google Sign-In plugin requires
+// this server client ID when google-services.json is not used by Gradle.
+const _googleServerClientId =
+    '507347665820-molmtl92s3v7o1ehp7gio8pd0h96nn2e.apps.googleusercontent.com';
 const _superAdminUid = 'L5E8FXohf6Y7HLify4ITu6eMvIZ2';
 
 final firebaseAuthProvider = Provider<fb.FirebaseAuth>((ref) {
@@ -201,12 +198,6 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
   Future<void> signInWithGoogle() async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      if (_googleServerClientId.isEmpty) {
-        throw fb.FirebaseAuthException(
-          code: 'google-config-missing',
-          message: 'Google sign-in is not configured yet. Add GOOGLE_SERVER_CLIENT_ID to the app build settings.',
-        );
-      }
       final googleUser = await GoogleSignIn(
         serverClientId: _googleServerClientId,
       ).signIn();
