@@ -12,11 +12,20 @@ const PAYSTACK_SECRET_KEY = defineSecret("PAYSTACK_SECRET_KEY");
 const FLUTTERWAVE_SECRET_KEY = defineSecret("FLUTTERWAVE_SECRET_KEY");
 const OWNER_UID = "L5E8FXohf6Y7HLify4ITu6eMvIZ2";
 
+async function requireSuperAdmin(uid?: string): Promise<void> {
+  if (!uid) throw new HttpsError("unauthenticated", "Sign in required.");
+  if (uid === OWNER_UID) return;
+  const user = await db.collection("users").doc(uid).get();
+  if (user.data()?.role !== "super_admin" || user.data()?.isActive === false) {
+    throw new HttpsError("permission-denied", "Super Admin access required.");
+  }
+}
+
 async function requireAdmin(uid?: string): Promise<void> {
   if (!uid) throw new HttpsError("unauthenticated", "Sign in required.");
   if (uid === OWNER_UID) return;
   const user = await db.collection("users").doc(uid).get();
-  if (user.data()?.role !== "admin" || user.data()?.isActive === false) {
+  if (!["admin", "super_admin"].includes(String(user.data()?.role || "")) || user.data()?.isActive === false) {
     throw new HttpsError("permission-denied", "Administrator access required.");
   }
 }
@@ -29,9 +38,9 @@ async function audit(actorUid: string, action: string, targetUid?: string, detai
 }
 
 export const setCustomerRole = onCall(async (request) => {
-  if (!request.auth || request.auth.uid !== OWNER_UID) throw new HttpsError("permission-denied", "Only the Super Admin can change roles.");
+  await requireSuperAdmin(request.auth?.uid);
   const { uid, role } = request.data as { uid?: string; role?: string };
-  if (!uid || !["customer", "admin", "guest"].includes(String(role))) throw new HttpsError("invalid-argument", "A user UID and valid role are required.");
+  if (!uid || !["customer", "admin", "super_admin", "guest"].includes(String(role))) throw new HttpsError("invalid-argument", "A user UID and valid role are required.");
   if (uid === OWNER_UID) throw new HttpsError("failed-precondition", "The Super Admin role is immutable.");
   const userRef = db.collection("users").doc(uid);
   const user = await userRef.get();
