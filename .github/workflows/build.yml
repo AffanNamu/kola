@@ -97,9 +97,35 @@ jobs:
           BUILD_TOOLS_VERSION=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
           "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner" verify --print-certs build/app/outputs/flutter-apk/app-debug.apk
 
+      - name: Restore permanent Android release keystore
+        if: github.ref == 'refs/heads/main'
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 GitHub secret is not configured."
+            exit 1
+          fi
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/kolanut-release.jks
+          test -s android/app/kolanut-release.jks
+
       - name: Build APK (Release)
         if: github.ref == 'refs/heads/main'
-        run: flutter build apk --release --split-per-abi --dart-define=SUPABASE_VERIFY_BASE_URL=${{ secrets.SUPABASE_VERIFY_BASE_URL }} --dart-define=GOOGLE_SERVER_CLIENT_ID=${{ vars.GOOGLE_SERVER_CLIENT_ID }}
+        env:
+          ANDROID_KEYSTORE_PATH: app/kolanut-release.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: flutter build apk --release --split-per-abi --build-number=${{ github.run_number }} --dart-define=SUPABASE_VERIFY_BASE_URL=${{ secrets.SUPABASE_VERIFY_BASE_URL }} --dart-define=GOOGLE_SERVER_CLIENT_ID=${{ vars.GOOGLE_SERVER_CLIENT_ID }}
+
+      - name: Report permanent release signing fingerprints
+        if: github.ref == 'refs/heads/main'
+        run: |
+          BUILD_TOOLS_VERSION=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
+          for APK in build/app/outputs/flutter-apk/app-*-release.apk; do
+            echo "Fingerprint for $APK"
+            "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner" verify --print-certs "$APK"
+          done
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
