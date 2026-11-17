@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'functions/**'
       - 'firestore.rules'
       - 'firestore.indexes.json'
       - 'firebase.json'
@@ -56,6 +57,20 @@ jobs:
         run: |
           npx --yes firebase-tools deploy \
             --only firestore:indexes \
+            --project kola-7523f \
+            --non-interactive
+
+      - name: Deploy Cloud Functions
+        if: contains(join(github.event.head_commit.modified, ','), 'functions/')
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+        run: |
+          cd functions
+          npm install
+          npm run build
+          cd ..
+          npx --yes firebase-tools deploy \
+            --only functions \
             --project kola-7523f \
             --non-interactive
 
