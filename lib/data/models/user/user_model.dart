@@ -49,7 +49,8 @@ class UserModel with _$UserModel {
     return json;
   }
 
-  bool get isAdmin => role == 'admin';
+  bool get isAdmin => role == 'admin' || role == 'super_admin';
+  bool get isSuperAdmin => role == 'super_admin';
   bool get isCustomer => role == 'customer';
   bool get isGuest => role == 'guest';
 
