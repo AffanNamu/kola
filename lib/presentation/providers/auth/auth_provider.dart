@@ -100,7 +100,7 @@ final authStateProvider = StreamProvider<UserModel?>((ref) {
       photoUrl: fbUser.photoURL ?? existing?.photoUrl ?? '',
       phoneNumber: fbUser.phoneNumber ?? existing?.phoneNumber ?? '',
       role: fbUser.uid == _superAdminUid
-          ? FirestoreConstants.roleAdmin
+          ? 'super_admin'
           : (fbUser.isAnonymous ? FirestoreConstants.roleGuest : (existing?.role ?? FirestoreConstants.roleCustomer)),
       isEmailVerified: fbUser.emailVerified,
       updatedAt: DateTime.now(),
