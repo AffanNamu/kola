@@ -78,6 +78,12 @@ jobs:
       - name: Run code generation
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
+      - name: Report Android OAuth signing fingerprints
+        run: |
+          cd android
+          ./gradlew :app:signingReport
+          cd ..
+
       - name: Analyze code
         run: flutter analyze --no-fatal-infos
 
