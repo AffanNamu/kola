@@ -60,25 +60,35 @@ class ProductListScreen extends ConsumerWidget {
   }
 }
 
-class _AllProductsView extends ConsumerWidget {
+class _AllProductsView extends ConsumerStatefulWidget {
   const _AllProductsView({required this.dedupe});
   final List<dynamic> Function(List<dynamic>) dedupe;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final featured = ref.watch(featuredProductsProvider);
-    final newArrivals = ref.watch(newArrivalsProvider);
+  ConsumerState<_AllProductsView> createState() => _AllProductsViewState();
+}
 
+class _AllProductsViewState extends ConsumerState<_AllProductsView> {
+  @override
+  void initState() {
+    super.initState();
     Future.microtask(() {
+      if (!mounted) return;
       ref.read(featuredProductsProvider.notifier).load();
       ref.read(newArrivalsProvider.notifier).load();
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final featured = ref.watch(featuredProductsProvider);
+    final newArrivals = ref.watch(newArrivalsProvider);
 
     final combined = <dynamic>[];
     featured.whenOrNull(loaded: (x) => combined.addAll(x));
     newArrivals.whenOrNull(loaded: (x) => combined.addAll(x));
 
-    final list = dedupe(combined);
+    final list = widget.dedupe(combined);
 
     final isLoading = featured.maybeWhen(loading: () => true, orElse: () => false) ||
         newArrivals.maybeWhen(loading: () => true, orElse: () => false);
