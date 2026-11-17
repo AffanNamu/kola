@@ -41,23 +41,13 @@ android {
             val keyAliasValue = System.getenv("ANDROID_KEY_ALIAS")
             val keyPasswordValue = System.getenv("ANDROID_KEY_PASSWORD")
 
-            require(!keystorePath.isNullOrBlank()) {
-                "ANDROID_KEYSTORE_PATH is required for release signing."
-            }
-            require(!storePasswordValue.isNullOrBlank()) {
-                "ANDROID_KEYSTORE_PASSWORD is required for release signing."
-            }
-            require(!keyAliasValue.isNullOrBlank()) {
-                "ANDROID_KEY_ALIAS is required for release signing."
-            }
-            require(!keyPasswordValue.isNullOrBlank()) {
-                "ANDROID_KEY_PASSWORD is required for release signing."
-            }
-
-            storeFile = file(keystorePath)
-            storePassword = storePasswordValue
-            keyAlias = keyAliasValue
-            keyPassword = keyPasswordValue
+            // Keep Gradle configuration compatible with debug builds, which do
+            // not need the release keystore. The release workflow supplies all
+            // four values before invoking the release task.
+            storeFile = file(keystorePath ?: "kolanut-release.jks")
+            storePassword = storePasswordValue ?: ""
+            keyAlias = keyAliasValue ?: ""
+            keyPassword = keyPasswordValue ?: ""
         }
     }
 
