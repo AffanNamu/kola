@@ -40,13 +40,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _continueAsGuest() async {
-    await ref.read(authControllerProvider.notifier).signInAnonymously();
-    if (!mounted) return;
-    ref.read(authControllerProvider).whenOrNull(
-      error: (e, _) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authErrorMessage(e))),
-      ),
-    );
+    try {
+      // Guest browsing is local-first and does not create a Firebase account.
+      // Clear an old anonymous session created by earlier app versions.
+      await ref.read(authControllerProvider.notifier).continueAsGuest();
+      if (!mounted) return;
+      context.go(RouteConstants.home);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not enter guest mode: ${authErrorMessage(e)}')),
+      );
+    }
   }
 
   Future<void> _submit() async {
