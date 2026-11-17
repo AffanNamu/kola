@@ -220,7 +220,7 @@ class _ProductGrid extends ConsumerWidget {
                   height: 44,
                   child: ElevatedButton.icon(
                     onPressed: () async {
-                      await ref.read(cartControllerProvider.notifier).addToCart(
+                      final added = await ref.read(cartControllerProvider.notifier).addToCart(
                             productId: p.id,
                             name: p.name,
                             image: p.thumbnailUrl,
@@ -233,7 +233,7 @@ class _ProductGrid extends ConsumerWidget {
                           );
                       // ignore: use_build_context_synchronously
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Added to cart')),
+                        SnackBar(content: Text(added ? 'Added to cart' : 'Could not add item: ${ref.read(cartControllerProvider).error ?? 'Please try again.'}')),
                       );
                     },
                     icon: const Icon(Icons.add_shopping_cart, size: 18),
