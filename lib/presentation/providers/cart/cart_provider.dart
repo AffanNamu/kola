@@ -50,7 +50,7 @@ class CartController extends StateNotifier<AsyncValue<void>> {
     return '$productId|$v';
   }
 
-  Future<void> addToCart({
+  Future<bool> addToCart({
     required String productId,
     required String name,
     required String image,
