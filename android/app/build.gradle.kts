@@ -34,12 +34,36 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+            val storePasswordValue = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            val keyAliasValue = System.getenv("ANDROID_KEY_ALIAS")
+            val keyPasswordValue = System.getenv("ANDROID_KEY_PASSWORD")
+
+            require(!keystorePath.isNullOrBlank()) {
+                "ANDROID_KEYSTORE_PATH is required for release signing."
+            }
+            require(!storePasswordValue.isNullOrBlank()) {
+                "ANDROID_KEYSTORE_PASSWORD is required for release signing."
+            }
+            require(!keyAliasValue.isNullOrBlank()) {
+                "ANDROID_KEY_ALIAS is required for release signing."
+            }
+            require(!keyPasswordValue.isNullOrBlank()) {
+                "ANDROID_KEY_PASSWORD is required for release signing."
+            }
+
+            storeFile = file(keystorePath)
+            storePassword = storePasswordValue
+            keyAlias = keyAliasValue
+            keyPassword = keyPasswordValue
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: replace with your own release keystore before publishing.
-            // Using debug signing for now so `flutter build apk --release` works
-            // out of the box on a brand-new repo with no keystore yet.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
