@@ -11,6 +11,7 @@ const db = getFirestore();
 const PAYSTACK_SECRET_KEY = defineSecret("PAYSTACK_SECRET_KEY");
 const FLUTTERWAVE_SECRET_KEY = defineSecret("FLUTTERWAVE_SECRET_KEY");
 // The permanent project owner remains the root of trust; additional Super Admins are role-managed.
+// Role mutations are callable-backend-only and audited for accountability.
 const OWNER_UID = "L5E8FXohf6Y7HLify4ITu6eMvIZ2";
 
 async function requireSuperAdmin(uid?: string): Promise<void> {
