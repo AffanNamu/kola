@@ -66,6 +66,9 @@ class CartController extends StateNotifier<AsyncValue<void>> {
       final id = _makeId(productId, variantId);
       final current = await (_db.select(_db.cartItems)..where((t) => t.id.equals(id))).getSingleOrNull();
       final newQty = (current?.quantity ?? 0) + quantity;
+      if (maxStock > 0 && newQty > maxStock) {
+        throw StateError('Only $maxStock units are available for this product.');
+      }
       await _db.upsertCartItem(
         CartItemsCompanion.insert(
           id: id,
@@ -82,6 +85,7 @@ class CartController extends StateNotifier<AsyncValue<void>> {
         ),
       );
     });
+    return !state.hasError;
   }
 
   Future<void> setQuantity(String id, int quantity) async {
