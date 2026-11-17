@@ -523,7 +523,7 @@ class _ProductHorizontalList extends ConsumerWidget {
                     alignment: Alignment.bottomRight,
                     child: InkWell(
                       onTap: () async {
-                        await ref.read(cartControllerProvider.notifier).addToCart(
+                        final added = await ref.read(cartControllerProvider.notifier).addToCart(
                               productId: p.id,
                               name: p.name,
                               image: p.thumbnailUrl,
@@ -536,7 +536,7 @@ class _ProductHorizontalList extends ConsumerWidget {
                             );
                         // ignore: use_build_context_synchronously
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Added to cart')),
+                          SnackBar(content: Text(added ? 'Added to cart' : 'Could not add item: ${ref.read(cartControllerProvider).error ?? 'Please try again.'}')),
                         );
                       },
                       borderRadius: BorderRadius.circular(AppSizes.radiusLG),
