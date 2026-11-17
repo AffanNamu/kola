@@ -219,10 +219,12 @@ class AuthController extends StateNotifier<AsyncValue<void>> {
     });
   }
 
-  Future<void> signInAnonymously() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(() async {
-      await _auth.signInAnonymously();
-    });
+  /// Enters true guest mode without creating a Firebase Authentication user.
+  /// If an older app version left an anonymous session on this device, clear it.
+  Future<void> continueAsGuest() async {
+    final currentUser = _auth.currentUser;
+    if (currentUser?.isAnonymous == true) {
+      await _auth.signOut();
+    }
   }
 }
