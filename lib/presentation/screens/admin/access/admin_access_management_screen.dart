@@ -11,9 +11,9 @@ class AdminAccessManagementScreen extends StatelessWidget {
   Future<void> _changeRole(
     BuildContext context,
     DocumentSnapshot<Map<String, dynamic>> doc,
-    String role,
-    {required bool canAssignSuperAdmin},
-  ) async {
+    String role, {
+    required bool canAssignSuperAdmin,
+  }) async {
     if (doc.id == _ownerUid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('The permanent owner account is protected.')),
