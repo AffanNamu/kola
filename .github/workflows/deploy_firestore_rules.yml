@@ -1,0 +1,73 @@
+name: Deploy Firestore Rules and Indexes
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'firestore.rules'
+      - 'firestore.indexes.json'
+      - 'firebase.json'
+      - '.github/workflows/deploy_firestore_rules.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy Firestore configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Firebase configuration
+        run: |
+          test -f firebase.json
+          test -f firestore.rules
+          test -f firestore.indexes.json
+          jq empty firebase.json
+          jq empty firestore.indexes.json
+
+      - name: Create service account credentials
+        env:
+          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
+          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+        run: |
+          if [ -z "$FIREBASE_CLIENT_EMAIL" ] || [ -z "$FIREBASE_PRIVATE_KEY" ]; then
+            echo "::error::FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY repository secrets must both be configured."
+            exit 1
+          fi
+
+          PRIVATE_KEY=$(printf '%s' "$FIREBASE_PRIVATE_KEY" | sed 's/\\n/\n/g')
+          jq -n \
+            --arg type "service_account" \
+            --arg project_id "kola-7523f" \
+            --arg client_email "$FIREBASE_CLIENT_EMAIL" \
+            --arg private_key "$PRIVATE_KEY" \
+            '{type: $type, project_id: $project_id, client_email: $client_email, private_key: $private_key}' \
+            > "$RUNNER_TEMP/firebase-sa.json"
+
+          chmod 600 "$RUNNER_TEMP/firebase-sa.json"
+
+      - name: Deploy Firestore security rules
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+        run: |
+          npx --yes firebase-tools deploy \
+            --only firestore:rules \
+            --project kola-7523f \
+            --non-interactive
+
+      - name: Deploy Firestore indexes
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
+        run: |
+          npx --yes firebase-tools deploy \
+            --only firestore:indexes \
+            --project kola-7523f \
+            --non-interactive
+
+      - name: Remove temporary credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firebase-sa.json"
