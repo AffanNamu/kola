@@ -31,23 +31,14 @@ jobs:
 
       - name: Create service account credentials
         env:
-          FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
-          FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: |
-          if [ -z "$FIREBASE_CLIENT_EMAIL" ] || [ -z "$FIREBASE_PRIVATE_KEY" ]; then
-            echo "::error::FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY repository secrets must both be configured."
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT_JSON repository secret is missing."
             exit 1
           fi
-
-          PRIVATE_KEY=$(printf '%s' "$FIREBASE_PRIVATE_KEY" | sed 's/\\n/\n/g')
-          jq -n \
-            --arg type "service_account" \
-            --arg project_id "kola-7523f" \
-            --arg client_email "$FIREBASE_CLIENT_EMAIL" \
-            --arg private_key "$PRIVATE_KEY" \
-            '{type: $type, project_id: $project_id, client_email: $client_email, private_key: $private_key}' \
-            > "$RUNNER_TEMP/firebase-sa.json"
-
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-sa.json"
+          jq -e '.type == "service_account" and .project_id == "kola-7523f" and (.client_email | type == "string") and (.private_key | type == "string")' "$RUNNER_TEMP/firebase-sa.json" >/dev/null
           chmod 600 "$RUNNER_TEMP/firebase-sa.json"
 
       - name: Deploy Firestore security rules
