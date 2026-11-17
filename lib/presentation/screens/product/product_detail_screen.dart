@@ -27,7 +27,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   Future<void> _addToCart(dynamic p) async {
     final price = p.price * _mult;
-    await ref.read(cartControllerProvider.notifier).addToCart(
+    final added = await ref.read(cartControllerProvider.notifier).addToCart(
           productId: p.id,
           name: p.name,
           image: p.thumbnailUrl,
@@ -41,7 +41,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Added to cart')),
+      SnackBar(content: Text(added ? 'Added to cart' : 'Could not add item: ${ref.read(cartControllerProvider).error ?? 'Please try again.'}')),
     );
   }
 
