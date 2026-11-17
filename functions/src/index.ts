@@ -48,7 +48,7 @@ export const setCustomerRole = onCall(async (request) => {
   if (!user.exists) throw new HttpsError("not-found", "User profile not found.");
   const previousRole = String(user.data()?.role || "customer");
   await userRef.update({ role, updatedAt: FieldValue.serverTimestamp() });
-  await audit(request.auth.uid, "customer_role_changed", uid, { previousRole, role });
+  await audit(request.auth!.uid, "customer_role_changed", uid, { previousRole, role });
   return { success: true, uid, role };
 });
 
