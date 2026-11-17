@@ -26,14 +26,14 @@ service cloud.firestore {
         || (signedIn()
           && exists(/databases/$(database)/documents/users/$(request.auth.uid))
           && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive != false;
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive != false);
     }
 
     function isCustomer() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
         && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'customer'
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive != false);
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isActive != false;
     }
 
     function validOwnerCreate() {
