@@ -55,10 +55,24 @@ service cloud.firestore {
         && request.resource.data.role in ['customer', 'guest']
         && request.resource.data.isDeleted == false;
 
-      allow update: if (isAdmin()
-          && request.resource.data.role == resource.data.role
-          && request.resource.data.isActive == resource.data.isActive
-          && request.resource.data.authDisabled == resource.data.authDisabled)
+      // Admins may promote ordinary registered customers/guests to Admin.
+      // They cannot create Super Admins, modify existing Super Admins, or
+      // change account security flags. Super Admins retain full role control
+      // except over the permanent owner account.
+      allow update: if (
+          isAdmin()
+          && userId != 'L5E8FXohf6Y7HLify4ITu6eMvIZ2'
+          && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['role', 'updatedAt'])
+          && request.resource.data.role in ['customer', 'guest', 'admin', 'super_admin']
+          && (
+            (isSuperAdmin())
+            || (
+              resource.data.role in ['customer', 'guest']
+              && request.resource.data.role in ['customer', 'guest', 'admin']
+            )
+          )
+        )
         || (isOwner(userId)
           && request.resource.data.uid == resource.data.uid
           && request.resource.data.role == resource.data.role
