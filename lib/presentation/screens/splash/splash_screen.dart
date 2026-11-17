@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
@@ -35,19 +36,13 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Placeholder logo - replace with your real asset later
-                Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    color: AppColors.primarySurface,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
-                    border: Border.all(color: AppColors.borderLight),
-                  ),
-                  child: const Icon(
-                    Icons.eco,
-                    color: AppColors.primary,
-                    size: 44,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                  child: SvgPicture.asset(
+                    'assets/images/kolanut_logo.svg',
+                    width: 112,
+                    height: 112,
+                    fit: BoxFit.contain,
                   ),
                 ),
                 const SizedBox(height: 20),
