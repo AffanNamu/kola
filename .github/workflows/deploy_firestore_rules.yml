@@ -61,7 +61,6 @@ jobs:
             --non-interactive
 
       - name: Deploy Cloud Functions
-        if: contains(join(github.event.head_commit.modified, ','), 'functions/')
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/firebase-sa.json
         run: |
