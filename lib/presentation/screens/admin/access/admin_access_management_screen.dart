@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -13,6 +12,7 @@ class AdminAccessManagementScreen extends StatelessWidget {
     BuildContext context,
     DocumentSnapshot<Map<String, dynamic>> doc,
     String role,
+    {required bool canAssignSuperAdmin},
   ) async {
     if (doc.id == _ownerUid) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -20,10 +20,17 @@ class AdminAccessManagementScreen extends StatelessWidget {
       );
       return;
     }
+    if (role == 'super_admin' && !canAssignSuperAdmin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Only a Super Admin can appoint another Super Admin.')),
+      );
+      return;
+    }
     try {
-      await FirebaseFunctions.instance
-          .httpsCallable('setCustomerRole')
-          .call({'uid': doc.id, 'role': role});
+      await FirebaseFirestore.instance.collection('users').doc(doc.id).update({
+        'role': role,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Role updated to ${role.replaceAll('_', ' ')}.')),
@@ -51,8 +58,9 @@ class AdminAccessManagementScreen extends StatelessWidget {
       body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
         stream: FirebaseFirestore.instance.collection('users').doc(currentUid).snapshots(),
         builder: (context, accessSnapshot) {
-          final canManage = currentUid == _ownerUid ||
-              accessSnapshot.data?.data()?['role'] == 'super_admin';
+          final currentRole = accessSnapshot.data?.data()?['role'];
+          final canAssignSuperAdmin = currentUid == _ownerUid || currentRole == 'super_admin';
+          final canManage = canAssignSuperAdmin || currentRole == 'admin';
           if (!canManage) {
             if (accessSnapshot.hasError) {
               return Center(child: Text('Unable to verify administrator access: ${accessSnapshot.error}'));
@@ -102,7 +110,7 @@ class AdminAccessManagementScreen extends StatelessWidget {
                                 fontWeight: FontWeight.w900)),
                         SizedBox(height: 5),
                         Text(
-                          'Promote registered customers to Admin or Super Admin. The permanent owner account cannot be demoted.',
+                          'Admins can promote registered users to Admin. Super Admins can also appoint other Super Admins. The permanent owner account is protected.',
                           style: TextStyle(color: Color(0xFFD6E7DA), fontSize: 12, height: 1.4),
                         ),
                       ],
@@ -126,7 +134,7 @@ class AdminAccessManagementScreen extends StatelessWidget {
                             children: [
                               Text('$admins administrator accounts • $superAdmins super admins',
                                   style: const TextStyle(fontWeight: FontWeight.w800)),
-                              const Text('Only Super Admin can change roles',
+                              Text(canAssignSuperAdmin ? 'You can manage Admin and Super Admin roles' : 'You can promote registered users to Admin',
                                   style: TextStyle(color: Color(0xFF778078), fontSize: 10)),
                             ],
                           ),
@@ -181,18 +189,21 @@ class AdminAccessManagementScreen extends StatelessWidget {
                             ),
                           ),
                           DropdownButton<String>(
-                            value: ['admin', 'super_admin', 'customer', 'guest'].contains(role)
+                            value: (canAssignSuperAdmin
+                                    ? ['admin', 'super_admin', 'customer', 'guest']
+                                    : ['admin', 'customer', 'guest']).contains(role)
                                 ? role : 'customer',
                             underline: const SizedBox.shrink(),
-                            items: const [
-                              DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                              DropdownMenuItem(value: 'super_admin', child: Text('Super Admin')),
-                              DropdownMenuItem(value: 'customer', child: Text('Customer')),
-                              DropdownMenuItem(value: 'guest', child: Text('Guest')),
+                            items: [
+                              const DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                              if (canAssignSuperAdmin)
+                                const DropdownMenuItem(value: 'super_admin', child: Text('Super Admin')),
+                              const DropdownMenuItem(value: 'customer', child: Text('Customer')),
+                              const DropdownMenuItem(value: 'guest', child: Text('Guest')),
                             ],
                             onChanged: protected ? null : (value) {
                               if (value != null && value != role) {
-                                _changeRole(context, doc, value);
+                                _changeRole(context, doc, value, canAssignSuperAdmin: canAssignSuperAdmin);
                               }
                             },
                           ),
@@ -202,7 +213,7 @@ class AdminAccessManagementScreen extends StatelessWidget {
                   }),
                   const SizedBox(height: 8),
                   const Text(
-                    'Only registered accounts appear here. A person must create an account before you can grant administrator access.',
+                    'Only registered accounts appear here. Admins can promote customers or guests to Admin. Only Super Admins can appoint another Super Admin.',
                     style: TextStyle(color: Color(0xFF8A6A34), fontSize: 11, height: 1.4),
                   ),
                 ],
