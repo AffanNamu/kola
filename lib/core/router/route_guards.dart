@@ -50,7 +50,7 @@ class RouteGuards {
 
         // Checkout always requires a real account. Browsing and cart remain public.
         if (currentPath.startsWith(RouteConstants.checkout) &&
-            (!isLoggedIn || user?.role == 'guest')) {
+            (!isLoggedIn || user.role == 'guest')) {
           return RouteConstants.register;
         }
 
