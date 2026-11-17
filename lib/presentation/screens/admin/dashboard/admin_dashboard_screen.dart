@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/route_constants.dart';
+import '../../../providers/auth/auth_provider.dart';
 
-class AdminDashboardScreen extends StatelessWidget {
+class AdminDashboardScreen extends ConsumerWidget {
   const AdminDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final sections = <_Item>[
       _Item('Orders', 'Fulfilment & tracking', Icons.receipt_long_rounded, const Color(0xFFE9F1FF), const Color(0xFF3766A5), () => context.push('/admin/orders')),
       _Item('Customers', 'Profiles & access', Icons.people_alt_rounded, const Color(0xFFE7F4EA), const Color(0xFF28764B), () => context.push('/admin/customers')),
@@ -31,7 +33,30 @@ _Item('Access & roles', 'Administrator permissions', Icons.admin_panel_settings_
           Text('KOLA COMMERCE', style: TextStyle(fontSize: 10, letterSpacing: 2.1, color: Color(0xFF718076), fontWeight: FontWeight.w800)),
           Text('Admin workspace', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
         ]),
-        actions: [IconButton(tooltip: 'Open storefront', onPressed: () => context.go('/home'), icon: const Icon(Icons.storefront_outlined)), const SizedBox(width: 7)],
+        actions: [
+          IconButton(tooltip: 'Open storefront', onPressed: () => context.go('/home'), icon: const Icon(Icons.storefront_outlined)),
+          IconButton(
+            tooltip: 'Sign out',
+            onPressed: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('Sign out?'),
+                  content: const Text('You will be returned to the sign-in screen.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+                    FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Sign out')),
+                  ],
+                ),
+              );
+              if (confirmed != true || !context.mounted) return;
+              await ref.read(authControllerProvider.notifier).signOut();
+              if (context.mounted) context.go(RouteConstants.login);
+            },
+            icon: const Icon(Icons.logout_rounded),
+          ),
+          const SizedBox(width: 7),
+        ],
       ),
       body: SafeArea(child: ListView(padding: const EdgeInsets.fromLTRB(18, 8, 18, 30), children: [
         Container(padding: const EdgeInsets.all(22), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF123A28), Color(0xFF2E6845)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(26), boxShadow: const [BoxShadow(color: Color(0x24163E2B), blurRadius: 20, offset: Offset(0, 9))]), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
