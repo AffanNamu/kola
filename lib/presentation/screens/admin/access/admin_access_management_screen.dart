@@ -201,7 +201,7 @@ class AdminAccessManagementScreen extends StatelessWidget {
                               const DropdownMenuItem(value: 'customer', child: Text('Customer')),
                               const DropdownMenuItem(value: 'guest', child: Text('Guest')),
                             ],
-                            onChanged: protected ? null : (value) {
+                            onChanged: (protected || (!canAssignSuperAdmin && !['customer', 'guest'].contains(role))) ? null : (value) {
                               if (value != null && value != role) {
                                 _changeRole(context, doc, value, canAssignSuperAdmin: canAssignSuperAdmin);
                               }
