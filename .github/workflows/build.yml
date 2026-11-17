@@ -97,6 +97,69 @@ jobs:
           BUILD_TOOLS_VERSION=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
           "$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner" verify --print-certs build/app/outputs/flutter-apk/app-debug.apk
 
+      - name: Register Android signing fingerprints with Firebase
+        if: github.ref == 'refs/heads/main'
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          BUILD_TOOLS_VERSION=$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -n 1)
+          CERT_OUTPUT=$("$ANDROID_HOME/build-tools/$BUILD_TOOLS_VERSION/apksigner" verify --print-certs build/app/outputs/flutter-apk/app-debug.apk)
+          export KOLA_SHA1=$(printf '%s\n' "$CERT_OUTPUT" | sed -n 's/.*certificate SHA-1 digest: //p' | head -n 1)
+          export KOLA_SHA256=$(printf '%s\n' "$CERT_OUTPUT" | sed -n 's/.*certificate SHA-256 digest: //p' | head -n 1)
+          node <<'NODE'
+          const crypto = require('node:crypto');
+          const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '{}');
+          if (!sa.client_email || !sa.private_key) {
+            throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is missing or invalid.');
+          }
+          const b64url = value => Buffer.from(value).toString('base64url');
+          const now = Math.floor(Date.now() / 1000);
+          const unsigned = b64url(JSON.stringify({ alg: 'RS256', typ: 'JWT' })) + '.' +
+            b64url(JSON.stringify({
+              iss: sa.client_email,
+              scope: 'https://www.googleapis.com/auth/firebase',
+              aud: 'https://oauth2.googleapis.com/token',
+              iat: now,
+              exp: now + 3600
+            }));
+          const signer = crypto.createSign('RSA-SHA256');
+          signer.update(unsigned);
+          const assertion = unsigned + '.' + signer.sign(sa.private_key, 'base64url');
+          (async () => {
+            const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+              method: 'POST',
+              headers: { 'content-type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams({
+                grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                assertion
+              })
+            });
+            const tokenData = await tokenResponse.json();
+            if (!tokenResponse.ok) throw new Error('Google token exchange failed: ' + JSON.stringify(tokenData));
+            const parent = 'projects/kola-7523f/androidApps/1:507347665820:android:a602b2acc216d54f8b7e59';
+            const base = 'https://firebase.googleapis.com/v1beta1/' + parent + '/sha';
+            for (const [shaHash, certType] of [[process.env.KOLA_SHA1, 'SHA_1'], [process.env.KOLA_SHA256, 'SHA_256']]) {
+              if (!shaHash) throw new Error('Could not extract ' + certType + ' from the built APK.');
+              const headers = { authorization: 'Bearer ' + tokenData.access_token, 'content-type': 'application/json' };
+              const existingResponse = await fetch(base, { headers });
+              const existing = await existingResponse.json();
+              if (!existingResponse.ok) throw new Error('Could not read Firebase SHA certificates: ' + JSON.stringify(existing));
+              if ((existing.certificates || []).some(item => item.shaHash?.toLowerCase() === shaHash.toLowerCase())) {
+                console.log(certType + ' already registered in Firebase.');
+                continue;
+              }
+              const response = await fetch(base, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ name: '', shaHash, certType })
+              });
+              const result = await response.json();
+              if (!response.ok) throw new Error('Firebase SHA registration failed: ' + JSON.stringify(result));
+              console.log(certType + ' registered in Firebase: ' + shaHash);
+            }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+
       - name: Build APK (Release)
         if: github.ref == 'refs/heads/main'
         run: flutter build apk --release --split-per-abi --dart-define=SUPABASE_VERIFY_BASE_URL=${{ secrets.SUPABASE_VERIFY_BASE_URL }} --dart-define=GOOGLE_SERVER_CLIENT_ID=${{ vars.GOOGLE_SERVER_CLIENT_ID }}
