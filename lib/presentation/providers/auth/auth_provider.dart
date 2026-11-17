@@ -6,7 +6,13 @@ import '../../../core/constants/firestore_constants.dart';
 import '../../../data/models/user/user_model.dart';
 import '../../../data/remote/firestore/user_firestore.dart';
 
-const _googleServerClientId = String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID');
+// OAuth client IDs are public application identifiers, not secrets.
+ // Keep a source fallback so Google sign-in cannot be disabled by a missing
+ // GitHub Actions variable in an otherwise valid APK.
+const _googleServerClientId = String.fromEnvironment(
+  'GOOGLE_SERVER_CLIENT_ID',
+  defaultValue: '507347665820-molmtl92s3v7o1ehp7gio8pd0h96nn2e.apps.googleusercontent.com',
+);
 const _superAdminUid = 'L5E8FXohf6Y7HLify4ITu6eMvIZ2';
 
 final firebaseAuthProvider = Provider<fb.FirebaseAuth>((ref) {
