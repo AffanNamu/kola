@@ -35,13 +35,27 @@ class CartItemTile extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.productName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.productName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                            ),
                       ),
+                    ),
+                    IconButton(
+                      tooltip: 'Remove from cart',
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      padding: EdgeInsets.zero,
+                      onPressed: () => ref.read(cartControllerProvider.notifier).remove(item.id),
+                      icon: const Icon(Icons.delete_outline, size: 19, color: AppColors.error),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 if ((item.variantName as String).isNotEmpty)
