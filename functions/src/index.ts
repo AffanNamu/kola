@@ -47,7 +47,7 @@ async function audit(actorUid: string, action: string, targetUid?: string, detai
 export const listRegisteredUsers = onCall(async (request) => {
   await requireAdmin(request.auth?.uid);
   const authUsers = await getAuth().listUsers(1000);
-  const profiles = new Map<string, FirebaseFirestore.DocumentData>();
+  const profiles = new Map<string, Record<string, any>>();
   const userRefs = authUsers.users.map((user) => db.collection("users").doc(user.uid));
   for (let offset = 0; offset < userRefs.length; offset += 400) {
     const snapshots = await db.getAll(...userRefs.slice(offset, offset + 400));
