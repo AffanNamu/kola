@@ -39,6 +39,98 @@ async function audit(actorUid: string, action: string, targetUid?: string, detai
   });
 }
 
+
+/**
+ * Returns Firebase Authentication accounts to administrators and repairs
+ * missing Firestore profile documents created by older/failed signup flows.
+ */
+export const listRegisteredUsers = onCall(async (request) => {
+  await requireAdmin(request.auth?.uid);
+  const authUsers = await getAuth().listUsers(1000);
+  const profiles = new Map<string, Record<string, any>>();
+  const userRefs = authUsers.users.map((user) => db.collection("users").doc(user.uid));
+  for (let offset = 0; offset < userRefs.length; offset += 400) {
+    const snapshots = await db.getAll(...userRefs.slice(offset, offset + 400));
+    for (const snapshot of snapshots) {
+      if (snapshot.exists) profiles.set(snapshot.id, snapshot.data() || {});
+    }
+  }
+  for (let offset = 0; offset < authUsers.users.length; offset += 400) {
+    const batch = db.batch();
+    for (const authUser of authUsers.users.slice(offset, offset + 400)) {
+      const existing = profiles.get(authUser.uid) || {};
+      batch.set(db.collection("users").doc(authUser.uid), {
+        uid: authUser.uid,
+        email: authUser.email || existing.email || "",
+        displayName: authUser.displayName || existing.displayName || "",
+        photoUrl: authUser.photoURL || existing.photoUrl || "",
+        role: existing.role || "customer",
+        isActive: existing.isActive !== false && !authUser.disabled,
+        isDeleted: existing.isDeleted === true,
+        isEmailVerified: authUser.emailVerified,
+        createdAt: existing.createdAt || FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    }
+    await batch.commit();
+  }
+  return {
+    users: authUsers.users.map((user) => {
+      const profile = profiles.get(user.uid) || {};
+      return {
+        uid: user.uid,
+        email: user.email || profile.email || "",
+        displayName: user.displayName || profile.displayName || "",
+        role: profile.role || "customer",
+        isActive: profile.isActive !== false && !user.disabled,
+        emailVerified: user.emailVerified,
+      };
+    }),
+    truncated: Boolean(authUsers.pageToken),
+  };
+});
+
+/** Promote an already registered Firebase Authentication account by email. */
+export const addAdminByEmail = onCall(async (request) => {
+  await requireAdmin(request.auth?.uid);
+  const email = String(request.data?.email || "").trim().toLowerCase();
+  if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+    throw new HttpsError("invalid-argument", "Enter a valid registered email address.");
+  }
+  let account;
+  try {
+    account = await getAuth().getUserByEmail(email);
+  } catch (error: any) {
+    if (error?.code === "auth/user-not-found") {
+      throw new HttpsError("not-found", "No registered Kola account uses that email.");
+    }
+    throw error;
+  }
+  if (account.uid === OWNER_UID) {
+    throw new HttpsError("failed-precondition", "The permanent owner account cannot be changed.");
+  }
+  const userRef = db.collection("users").doc(account.uid);
+  const profile = await userRef.get();
+  const previousRole = String(profile.data()?.role || "customer");
+  if (previousRole === "super_admin" && request.auth?.uid !== OWNER_UID) {
+    throw new HttpsError("permission-denied", "Only the permanent owner can change another Super Admin.");
+  }
+  await userRef.set({
+    uid: account.uid,
+    email: account.email || email,
+    displayName: account.displayName || profile.data()?.displayName || "",
+    photoUrl: account.photoURL || profile.data()?.photoUrl || "",
+    role: "admin",
+    isActive: !account.disabled,
+    isDeleted: false,
+    isEmailVerified: account.emailVerified,
+    createdAt: profile.data()?.createdAt || FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  }, { merge: true });
+  await audit(request.auth!.uid, "admin_added_by_email", account.uid, { email, previousRole, role: "admin" });
+  return { success: true, uid: account.uid, email, role: "admin" };
+});
+
 export const setCustomerRole = onCall(async (request) => {
   await requireSuperAdmin(request.auth?.uid);
   const { uid, role } = request.data as { uid?: string; role?: string };
