@@ -34,7 +34,7 @@ _Item('Access & roles', 'Administrator permissions', Icons.admin_panel_settings_
           Text('Admin workspace', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
         ]),
         actions: [
-          IconButton(tooltip: 'Open storefront', onPressed: () => context.go('/home'), icon: const Icon(Icons.storefront_outlined)),
+          TextButton.icon(\n            onPressed: () => context.push('/home'),\n            icon: const Icon(Icons.storefront_outlined),\n            label: const Text(\"User's view\"),\n            style: TextButton.styleFrom(foregroundColor: AppColors.primary),\n          ),
           IconButton(
             tooltip: 'Sign out',
             onPressed: () async {
